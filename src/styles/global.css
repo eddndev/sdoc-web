@@ -1,0 +1,82 @@
+@import "tailwindcss";
+@plugin "./patina.js";
+
+@import "@fontsource-variable/piazzolla/opsz.css";
+@import "@fontsource-variable/sometype-mono/wght.css";
+
+@theme {
+  --color-verdin: #8dbfae;
+  --color-verdin-palido: #c4e0d3;
+  --color-tinta: #0f2a27;
+  --color-bronce: #17332e;
+  --color-cobre: #7a2f0e;
+  --color-cobre-vivo: #e09a63;
+
+  --font-serif: "Piazzolla Variable", Georgia, serif;
+  --font-mono: "Sometype Mono Variable", ui-monospace, monospace;
+
+  /* Escala en razón 4:3 sobre un cuerpo de 19 px. */
+  --text-cuerpo: 1.1875rem;
+  --text-nota: 0.97rem;
+  --text-subtitulo: 1.58rem;
+  --text-titulo: clamp(2.3rem, 5.2vw, 3.75rem);
+  --text-portada: clamp(4rem, 13.4vw, 12.5rem);
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    font-family: var(--font-serif);
+    font-size: 100%;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    font-size: var(--text-cuerpo);
+    line-height: 1.6;
+    font-optical-sizing: auto;
+    font-feature-settings: "onum" 1;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-weight: 800;
+    line-height: 1.04;
+    text-wrap: balance;
+  }
+
+  a {
+    text-decoration-line: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.18em;
+  }
+
+  a:hover {
+    text-decoration-thickness: 3px;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-cobre);
+    outline-offset: 3px;
+  }
+
+  .placa-bronce :focus-visible {
+    outline-color: var(--color-cobre-vivo);
+  }
+
+  code,
+  kbd,
+  .bytes {
+    font-family: var(--font-mono);
+    font-size: 0.88em;
+    font-feature-settings: normal;
+    overflow-wrap: anywhere;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+}

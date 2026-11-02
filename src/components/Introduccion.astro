@@ -1,0 +1,20 @@
+---
+/* Introducción: el problema que tomamos y dónde está el detalle. */
+import artefactos from "../data/artefactos.json";
+
+const reporte = artefactos.archivos.find((entrada) => entrada.archivo.includes("arquitectura"))!;
+---
+
+<section id="introduccion" class="px-4 py-20 sm:px-8 lg:px-12 lg:py-28">
+  <h2 class="sr-only">Introducción</h2>
+  <p class="max-w-[46rem] text-subtitulo leading-[1.32]">
+    Tomamos el caso de un despacho de abogados ficticio que comparte documentos con sus clientes a través de un
+    servidor. A ese servidor lo tratamos como honesto pero curioso: guarda y valida, pero nunca recibe la clave del
+    documento, las partes de Shamir en claro ni las claves privadas. Por eso la app de cada persona cifra y firma el
+    documento antes de publicarlo.
+  </p>
+  <p class="mt-6 max-w-[38rem]">
+    Este sitio resume el <a href={`/descargas/${reporte.archivo}`}>reporte de arquitectura</a>. Los quince casos de uso
+    y el detalle de cada formato están en el PDF.
+  </p>
+</section>

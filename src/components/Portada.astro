@@ -1,0 +1,72 @@
+---
+/* Portada: la placa se revela una vez al cargar y el puntero bruñe la pátina. */
+---
+
+<header class="relative min-h-svh overflow-hidden">
+  <div class="lamina absolute inset-x-0 top-0 h-[58svh] sm:h-full" data-lamina data-portada data-celda="2">
+    <img src="/laminas/hero.webp" alt="" data-foco="100 42" data-foco-angosto="92 30" />
+    <canvas aria-hidden="true"></canvas>
+  </div>
+
+  <div class="relative flex min-h-svh flex-col justify-between px-4 py-5 sm:px-8 lg:px-12">
+    <nav aria-label="Secciones" class="flex flex-wrap gap-x-6 text-[length:var(--text-nota)]">
+      <a href="#arquitectura">Arquitectura</a>
+      <a href="#mecanismos">Mecanismos</a>
+      <a href="#primitivas">Primitivas</a>
+      <a href="#limites">Límites</a>
+      <a href="#descargas">Descargas</a>
+    </nav>
+
+    <div>
+      <h1 class="text-[length:var(--text-portada)] leading-[0.86] font-black tracking-[-0.03em]">
+        Secure<br />Documents
+      </h1>
+      <p class="mt-6 max-w-[34rem]">
+        Proyecto de Selected Topics in Cryptography con la profesora Sandra Díaz Santiago, grupo 7CM1, ESCOM, IPN.
+        Lo hicimos Eduardo Alonso Sánchez, Cristhian Antonio Rivera Martínez y Gustavo Zaragoza Guerrero.
+      </p>
+    </div>
+  </div>
+</header>
+
+<script>
+  import gsap from "gsap";
+  import { Lamina } from "../scripts/raster";
+
+  const marco = document.querySelector<HTMLElement>("[data-portada]")!;
+  const fuente = marco.querySelector("img")!;
+  const lienzo = marco.querySelector("canvas")!;
+  const quieto = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function encender() {
+    const lamina = new Lamina(fuente, lienzo, Number(marco.dataset.celda));
+    lamina.revelado.avance = quieto ? 1 : 0;
+    lamina.medir();
+    marco.dataset.listo = "";
+    new ResizeObserver(() => lamina.medir()).observe(marco);
+
+    if (!quieto) {
+      gsap.to(lamina.revelado, { avance: 1, duration: 2.2, ease: "power2.inOut", onUpdate: () => lamina.pintar() });
+      const contenedor = marco.parentElement!;
+      const radio = 26;
+      contenedor.addEventListener("pointermove", (evento) => {
+        if (evento.pointerType !== "mouse") return;
+        const caja = marco.getBoundingClientRect();
+        gsap.to(lamina.revelado, {
+          x: (evento.clientX - caja.left) / lamina.celda,
+          y: (evento.clientY - caja.top) / lamina.celda,
+          radio,
+          duration: 0.35,
+          overwrite: "auto",
+          onUpdate: () => lamina.pintar(),
+        });
+      });
+      contenedor.addEventListener("pointerleave", () => {
+        gsap.to(lamina.revelado, { radio: 0, duration: 0.5, overwrite: "auto", onUpdate: () => lamina.pintar() });
+      });
+    }
+  }
+
+  if (fuente.complete && fuente.naturalWidth) encender();
+  else fuente.addEventListener("load", encender, { once: true });
+</script>

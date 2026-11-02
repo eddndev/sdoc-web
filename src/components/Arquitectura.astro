@@ -1,0 +1,134 @@
+---
+/*
+ * Mapa de zonas de confianza. Sin JavaScript se ve toda la tabla debajo del mapa.
+ * Con JavaScript la misma tabla pasa a ser el panel y se filtra por zona.
+ */
+import ZonaMapa from "./ZonaMapa.astro";
+import {
+  android,
+  enLinea,
+  escritorio,
+  internet,
+  lecturaDelMapa,
+  procesoCa,
+  raiz,
+  raizOffline,
+  tituloTabla,
+  visibilidad,
+  vps,
+} from "../data/arquitectura";
+
+const linea = "pointer-events-none absolute w-px bg-verdin-palido";
+const rotulo = "pointer-events-none absolute text-nota leading-none text-verdin-palido";
+---
+
+<section id="arquitectura" class="placa-bronce px-4 py-20 sm:px-8 sm:py-28 lg:px-12">
+  <h2 class="text-titulo font-black">Arquitectura</h2>
+  <p class="mt-6 max-w-[38rem]" set:html={enLinea(lecturaDelMapa)} />
+
+  <div class="mt-14 grid gap-12 in-data-js:xl:grid-cols-[minmax(0,1fr)_minmax(0,26rem)]">
+    <div class="min-w-0">
+      <div role="group" aria-label="Mapa de zonas de confianza" class="grid gap-10 md:grid-cols-2">
+        <ZonaMapa zona={escritorio} class="border-verdin" />
+        <ZonaMapa zona={android} class="border-verdin" />
+
+        <ZonaMapa
+          zona={internet}
+          class="border-verdin pl-12 md:col-span-2"
+          lista="md:grid md:grid-cols-2 md:gap-x-20 md:divide-y-0"
+        >
+          <span aria-hidden="true" class:list={[linea, "-top-10 -bottom-10 left-6"]}></span>
+          <span aria-hidden="true" class:list={[rotulo, "-top-7 left-8"]}>HTTPS</span>
+          <span
+            aria-hidden="true"
+            class:list={[linea, "-top-10 -bottom-10 left-[calc(50%+2.5rem)] hidden md:block"]}></span>
+          <span aria-hidden="true" class:list={[rotulo, "-top-7 left-[calc(50%+3rem)] hidden md:block"]}>HTTPS</span>
+        </ZonaMapa>
+
+        <div class="grid gap-3 border border-dashed border-verdin p-3 md:col-span-2 md:grid-cols-[3fr_2fr]">
+          <ZonaMapa zona={vps} class="border-transparent" />
+          <ZonaMapa zona={procesoCa} class="border-verdin" />
+        </div>
+
+        <ZonaMapa zona={raizOffline} class="border-verdin md:col-start-2">
+          <span aria-hidden="true" class:list={[linea, "bottom-full left-6 h-[3.3rem] md:left-1/2"]}></span>
+          <span
+            aria-hidden="true"
+            class:list={[rotulo, "bottom-[calc(100%+0.8rem)] left-8 md:left-[calc(50%+0.5rem)]"]}>firma al emisor</span
+          >
+        </ZonaMapa>
+      </div>
+
+      <p class="mt-10 max-w-[38rem] text-nota">
+        Cloudflare sólo resuelve DNS y TLS termina en Nginx. La confidencialidad de los documentos no depende de TLS.
+        Tomamos como referencia la rama <code>main</code> del repositorio principal (commit <code>a4c4da9</code>) y la
+        del repositorio de la CA (commit <code>65fe7ba</code>).
+      </p>
+    </div>
+
+    <div id="visibilidad" class="@container min-w-0 xl:sticky xl:top-8 xl:self-start">
+      <h3 data-titulo-panel aria-live="polite" class="text-subtitulo">{tituloTabla}</h3>
+      <p data-aviso-panel hidden class="mt-2 text-nota">Pulsa otra vez la zona para ver la tabla completa.</p>
+
+      <div class="mt-6">
+        {
+          visibilidad.map((fila) => (
+            <div
+              data-fila={fila.id}
+              class="grid gap-x-8 gap-y-2 border-t border-verdin/50 py-4 @3xl:grid-cols-[11rem_minmax(0,1fr)]"
+            >
+              <h4 class="leading-tight font-bold" set:html={enLinea(fila.parte)} />
+              <dl class="grid gap-x-8 gap-y-3 text-nota @3xl:grid-cols-2">
+                <div>
+                  <dt class="font-bold text-cobre-vivo">Ve</dt>
+                  <dd set:html={enLinea(fila.ve)} />
+                </div>
+                <div>
+                  <dt class="font-bold text-cobre-vivo">Nunca ve</dt>
+                  <dd set:html={enLinea(fila.nuncaVe)} />
+                </div>
+              </dl>
+            </div>
+          ))
+        }
+        <div
+          data-fila={raiz.id}
+          class="grid gap-x-8 gap-y-2 border-t border-verdin/50 py-4 @3xl:grid-cols-[11rem_minmax(0,1fr)]"
+        >
+          <h4 class="leading-tight font-bold">{raiz.parte}</h4>
+          <p class="text-nota">{raiz.nota}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  const seccion = document.querySelector<HTMLElement>("#arquitectura")!;
+  const panel = seccion.querySelector<HTMLElement>("#visibilidad")!;
+  const titulo = panel.querySelector<HTMLElement>("[data-titulo-panel]")!;
+  const aviso = panel.querySelector<HTMLElement>("[data-aviso-panel]")!;
+  const filas = [...panel.querySelectorAll<HTMLElement>("[data-fila]")];
+  const botones = [...seccion.querySelectorAll<HTMLButtonElement>("[data-zona]")];
+  const tituloCompleto = titulo.innerHTML;
+
+  function elegir(boton: HTMLButtonElement | null) {
+    const ids = boton?.dataset.filas?.split(" ");
+    for (const otro of botones) otro.setAttribute("aria-pressed", String(otro === boton));
+    for (const fila of filas) fila.hidden = Boolean(ids) && !ids!.includes(fila.dataset.fila!);
+    titulo.innerHTML = boton ? boton.innerHTML : tituloCompleto;
+    aviso.hidden = !boton;
+  }
+
+  for (const boton of botones) {
+    boton.disabled = false;
+    boton.addEventListener("click", () => {
+      elegir(boton.getAttribute("aria-pressed") === "true" ? null : boton);
+      /* En pantallas angostas el panel queda bajo el mapa: se trae a la vista. */
+      if (panel.getBoundingClientRect().top > innerHeight * 0.75) panel.scrollIntoView({ block: "nearest" });
+    });
+  }
+
+  seccion.dataset.js = "";
+  elegir(botones.find((boton) => boton.dataset.zona === "z3") ?? null);
+</script>

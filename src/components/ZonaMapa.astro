@@ -1,0 +1,47 @@
+---
+/* Una zona del mapa. Toda la superficie responde porque el botón se estira con ::after. */
+import { enLinea, type Zona } from "../data/arquitectura";
+
+interface Props {
+  zona: Zona;
+  /** Color del borde y lugar en la retícula. */
+  class?: string;
+  /** Clases extra para la lista de componentes. */
+  lista?: string;
+}
+const { zona, class: clase = "", lista = "" } = Astro.props;
+---
+
+<div
+  class:list={[
+    "relative border border-dashed p-4",
+    "has-enabled:hover:border-solid has-enabled:hover:border-verdin-palido",
+    "has-aria-pressed:bg-cobre-vivo has-aria-pressed:text-bronce",
+    "has-focus-visible:outline-3 has-focus-visible:outline-offset-3 has-focus-visible:outline-cobre-vivo",
+    clase,
+  ]}
+>
+  <slot />
+  <button
+    type="button"
+    disabled
+    aria-pressed="false"
+    aria-controls="visibilidad"
+    data-zona={zona.id}
+    data-filas={zona.filas.join(" ")}
+    class="text-left leading-tight font-bold after:absolute after:inset-0 enabled:cursor-pointer focus-visible:outline-none"
+  >
+    <span class="font-black">{zona.marca}</span>{" "}<Fragment set:html={enLinea(zona.nombre)} />
+  </button>
+  <ul class:list={["mt-3 divide-y divide-current/30 text-nota", lista]}>
+    {
+      zona.lineas.map((linea) => (
+        <li class="py-1.5 leading-snug">
+          {linea.titulo && <strong class="font-bold" set:html={enLinea(linea.titulo)} />}
+          {linea.titulo && " "}
+          <Fragment set:html={enLinea(linea.detalle)} />
+        </li>
+      ))
+    }
+  </ul>
+</div>

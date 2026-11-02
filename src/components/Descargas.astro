@@ -1,0 +1,141 @@
+---
+/* Descargas: documentos, herramientas y clientes, con tamaño y hash de cada uno. */
+import artefactos from "../data/artefactos.json";
+
+interface Fila {
+  nombre: string;
+  descripcion?: string;
+  archivo?: string;
+  formato?: string;
+  bytes?: number;
+  algoritmo: string;
+  hash: string;
+  enlace?: string;
+}
+
+const { archivos, clientes } = artefactos;
+
+const decimal = new Intl.NumberFormat("es-MX", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const legible = (bytes: number) =>
+  bytes < 1e6 ? `${decimal.format(bytes / 1e3)} kB` : `${decimal.format(bytes / 1e6)} MB`;
+
+const locales = (grupo: string): Fila[] =>
+  archivos
+    .filter((entrada) => entrada.grupo === grupo)
+    .map((entrada) => ({ ...entrada, archivo: undefined, enlace: `/descargas/${entrada.archivo}` }));
+
+const paquetes: Fila[] = [
+  ...clientes.paquetes.map(({ url: _sinEnlace, ...paquete }) => paquete),
+  {
+    nombre: "Certificado de firma del APK",
+    descripcion: "Huella del certificado que firma el APK de Android.",
+    ...clientes.certificadoApk,
+  },
+];
+
+const grupos = [
+  { titulo: "Documentos", filas: locales("documentos") },
+  { titulo: "Herramientas", filas: locales("herramientas") },
+  { titulo: "Clientes", filas: paquetes, sinEnlace: true },
+];
+---
+
+<section id="descargas" class="px-4 py-20 sm:px-8 lg:px-12 lg:py-28">
+  <h2 class="text-titulo font-black">Descargas</h2>
+  <p class="mt-5 max-w-[38rem]">
+    Cada fila indica su algoritmo y su hash. Un archivo se comprueba con <code>openssl dgst -sha3-256 archivo</code>, o
+    con <code>-sha256</code> en los paquetes de clientes.
+  </p>
+
+  {
+    grupos.map(({ titulo, filas, sinEnlace }) => (
+      <div class="mt-14 grid gap-x-12 gap-y-4 lg:grid-cols-[11rem_minmax(0,1fr)]">
+        <h3 class="text-subtitulo font-black">{titulo}</h3>
+
+        <div>
+          {sinEnlace && (
+            <p class="mb-5 max-w-[38rem]">
+              Versión {clientes.version}, commit <code>{clientes.commit}</code>, etiqueta{" "}
+              <code>{clientes.etiqueta}</code>. Estos paquetes todavía no tienen alojamiento público y requieren un alta
+              aprobada por un administrador u otro equipo activo para funcionar.
+            </p>
+          )}
+
+          <ul>
+            {filas.map((fila) => (
+              <li class="grid gap-x-10 gap-y-3 border-t border-tinta/40 py-4 sm:grid-cols-[minmax(0,1fr)_auto]">
+                <div>
+                  <p class="font-bold">
+                    {fila.enlace ? (
+                      <a href={fila.enlace} download>
+                        {fila.nombre}
+                      </a>
+                    ) : (
+                      fila.nombre
+                    )}
+                  </p>
+                  {fila.archivo && (
+                    <p class="text-nota">
+                      <code>{fila.archivo}</code>
+                    </p>
+                  )}
+                  {fila.descripcion && <p class="text-nota">{fila.descripcion}</p>}
+                  {fila.bytes && (
+                    <p class="text-nota" title={`${fila.bytes} bytes`}>
+                      {fila.formato}, {legible(fila.bytes)}
+                    </p>
+                  )}
+                </div>
+
+                <div class="w-fit max-w-full text-nota">
+                  <p class="flex items-baseline justify-between gap-4">
+                    <span>{fila.algoritmo}</span>
+                    <button
+                      type="button"
+                      hidden
+                      data-copiar={fila.hash}
+                      aria-label={`Copiar ${fila.algoritmo} de ${fila.nombre}`}
+                      class="-my-1 cursor-pointer py-1 text-cobre underline decoration-1 underline-offset-[0.18em] hover:decoration-[3px]"
+                    >
+                      Copiar
+                    </button>
+                  </p>
+                  <code class="block w-[32.5ch] max-w-full select-all">{fila.hash}</code>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    ))
+  }
+
+  <p role="status" class="sr-only" data-aviso-copia></p>
+</section>
+
+<script>
+  /* Sin portapapeles (o sin JavaScript) los botones siguen ocultos y el hash se selecciona con un clic. */
+  const aviso = document.querySelector<HTMLElement>("[data-aviso-copia]")!;
+
+  if (navigator.clipboard) {
+    for (const boton of document.querySelectorAll<HTMLButtonElement>("[data-copiar]")) {
+      let espera: ReturnType<typeof setTimeout>;
+      boton.hidden = false;
+      boton.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(boton.dataset.copiar!);
+          boton.textContent = "Copiado";
+          aviso.textContent = "Hash copiado";
+        } catch {
+          boton.textContent = "No se copió";
+          aviso.textContent = "No se pudo copiar el hash. Hay que seleccionarlo a mano";
+        }
+        clearTimeout(espera);
+        espera = setTimeout(() => {
+          boton.textContent = "Copiar";
+          aviso.textContent = "";
+        }, 1800);
+      });
+    }
+  }
+</script>

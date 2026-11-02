@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.astro/
+tools/raster/__pycache__/
+# Los archivos descargables se copian con `pnpm artefactos`; no se versionan.
+public/descargas/*
+!public/descargas/.gitkeep

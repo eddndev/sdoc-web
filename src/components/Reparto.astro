@@ -1,0 +1,193 @@
+---
+/*
+ * Regla de apertura del modo conjunto: cliente Y t de N abogados. Sin JavaScript se
+ * ve una tabla de casos con t = 2 y N = 3; con JavaScript la sustituyen los controles.
+ */
+interface Props {
+  class?: string;
+}
+const { class: clase = "" } = Astro.props;
+
+const MAXIMO = 8;
+const numeros = Array.from({ length: MAXIMO }, (_, i) => i + 1);
+const N_INICIAL = 3;
+const T_INICIAL = 2;
+
+const ficha =
+  "flex h-11 cursor-pointer items-center justify-center ring-1 ring-verdin-palido/50 ring-inset " +
+  "peer-checked:bg-verdin-palido peer-checked:font-bold peer-checked:text-bronce " +
+  "peer-focus-visible:outline-3 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-cobre-vivo";
+---
+
+<div class={clase} data-reparto>
+  <h4 class="text-subtitulo font-black">Quién tiene que aportar</h4>
+  <p class="mt-3 max-w-[38rem]">
+    En modo conjunto, la apertura necesita siempre la parte del cliente y al menos <i>t</i> partes de abogados distintos.
+    Cada abogado cuenta una vez, aunque tenga dos equipos.
+  </p>
+
+  <table class="mt-8 w-full max-w-[38rem] text-left text-nota" data-casos>
+    <caption class="pb-2 text-left font-bold">Casos con <i>t</i> = 2 y <i>N</i> = 3</caption>
+    <thead>
+      <tr>
+        <th scope="col" class="py-2 pr-4 font-bold">Aportan</th>
+        <th scope="col" class="py-2 font-bold">Resultado</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="border-t border-verdin-palido/30">
+        <td class="py-2 pr-4">Cliente, A<sub>1</sub> y A<sub>2</sub></td>
+        <td class="py-2"><i>K</i><sub>doc</sub> se reconstruye</td>
+      </tr>
+      <tr class="border-t border-verdin-palido/30">
+        <td class="py-2 pr-4">Cliente y A<sub>1</sub></td>
+        <td class="py-2">No se reconstruye: falta un abogado</td>
+      </tr>
+      <tr class="border-t border-verdin-palido/30">
+        <td class="py-2 pr-4">A<sub>1</sub>, A<sub>2</sub> y A<sub>3</sub></td>
+        <td class="py-2">No se reconstruye: falta el cliente</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div hidden data-controles>
+    <div class="mt-8 grid gap-x-12 gap-y-8 lg:grid-cols-12">
+      <div class="space-y-6 lg:col-span-6">
+        <fieldset>
+          <legend class="text-nota">Abogados del caso, <i>N</i></legend>
+          <ul class="mt-2 flex flex-wrap">
+            {
+              numeros.map((n) => (
+                <li>
+                  <label class="relative block">
+                    <input class="peer sr-only" type="radio" name="reparto-n" value={n} checked={n === N_INICIAL} />
+                    <span class:list={[ficha, "w-10"]}>{n}</span>
+                  </label>
+                </li>
+              ))
+            }
+          </ul>
+        </fieldset>
+
+        <fieldset>
+          <legend class="text-nota">Umbral entre abogados, <i>t</i></legend>
+          <ul class="mt-2 flex flex-wrap">
+            {
+              numeros.map((n) => (
+                <li>
+                  <label class="relative block">
+                    <input class="peer sr-only" type="radio" name="reparto-t" value={n} checked={n === T_INICIAL} />
+                    <span class:list={[ficha, "w-10"]}>{n}</span>
+                  </label>
+                </li>
+              ))
+            }
+          </ul>
+        </fieldset>
+
+        <fieldset>
+          <legend class="text-nota">Quién aporta su parte</legend>
+          <ul class="mt-2 flex flex-wrap gap-2">
+            <li>
+              <label class="relative block">
+                <input class="peer sr-only" type="checkbox" name="reparto-cliente" />
+                <span class:list={[ficha, "px-4"]}>Cliente</span>
+              </label>
+            </li>
+            {
+              numeros.map((n) => (
+                <li>
+                  <label class="relative block">
+                    <input
+                      class="peer sr-only"
+                      type="checkbox"
+                      name="reparto-abogado"
+                      aria-label={`Abogado ${n}`}
+                      checked={n <= N_INICIAL}
+                    />
+                    <span class:list={[ficha, "w-11"]}>
+                      <span aria-hidden="true">
+                        A<sub>{n}</sub>
+                      </span>
+                    </span>
+                  </label>
+                </li>
+              ))
+            }
+          </ul>
+        </fieldset>
+      </div>
+
+      <div role="status" class="lg:col-span-6">
+        <p class="text-titulo leading-none font-black">
+          <i>K</i><sub>doc</sub>
+          <span data-veredicto></span>
+        </p>
+        <p class="mt-5" data-cliente></p>
+        <p class="mt-2" data-abogados></p>
+      </div>
+    </div>
+    <p class="mt-6 max-w-[38rem] text-nota">
+      Mostramos hasta {MAXIMO} abogados. El protocolo admite 1 ≤ <i>t</i> ≤ <i>N</i> ≤ 255.
+    </p>
+  </div>
+
+  <p class="mt-8 max-w-[38rem]">
+    El modo directo no reparte: cada destinatario recibe <i>K</i><sub>doc</sub> completa en su <code>SDSP</code>, sellada
+    con HPKE hacia su X25519, y abre sin reunir quórum.
+  </p>
+</div>
+
+<script>
+  const raiz = document.querySelector<HTMLElement>("[data-reparto]")!;
+  const controles = raiz.querySelector<HTMLElement>("[data-controles]")!;
+  const casos = raiz.querySelector<HTMLElement>("[data-casos]")!;
+  const veredicto = raiz.querySelector<HTMLElement>("[data-veredicto]")!;
+  const lineaCliente = raiz.querySelector<HTMLElement>("[data-cliente]")!;
+  const lineaAbogados = raiz.querySelector<HTMLElement>("[data-abogados]")!;
+  const cliente = raiz.querySelector<HTMLInputElement>("[name=reparto-cliente]")!;
+  const tamanos = [...raiz.querySelectorAll<HTMLInputElement>("[name=reparto-n]")];
+  const umbrales = [...raiz.querySelectorAll<HTMLInputElement>("[name=reparto-t]")];
+  const abogados = [...raiz.querySelectorAll<HTMLInputElement>("[name=reparto-abogado]")];
+
+  function actualizar() {
+    const n = Number(tamanos.find((opcion) => opcion.checked)!.value);
+
+    /* t no puede pasar de N: si N baja, t baja con él. */
+    umbrales.forEach((opcion) => (opcion.closest("li")!.hidden = Number(opcion.value) > n));
+    let elegido = umbrales.find((opcion) => opcion.checked)!;
+    if (Number(elegido.value) > n) {
+      elegido = umbrales[n - 1];
+      elegido.checked = true;
+    }
+    const t = Number(elegido.value);
+
+    abogados.forEach((abogado, i) => {
+      const fuera = i >= n;
+      abogado.closest("li")!.hidden = fuera;
+      if (fuera) abogado.checked = false;
+    });
+    const aportan = abogados.filter((abogado) => abogado.checked).length;
+
+    /* La regla real: el nivel exterior exige al cliente; el interior, t abogados. */
+    const hayDespacho = aportan >= t;
+    const abre = cliente.checked && hayDespacho;
+
+    veredicto.textContent = abre ? "se reconstruye" : "no se reconstruye";
+    veredicto.classList.toggle("text-cobre-vivo", !abre);
+    lineaCliente.textContent = cliente.checked
+      ? "El cliente aporta f(1), su parte del nivel exterior."
+      : "Falta el cliente. Sin f(1) no hay apertura, aunque aporten todos los abogados.";
+    const verbo = aportan === 1 ? "Aporta" : "Aportan";
+    const plantilla = n === 1 ? "abogado" : "abogados";
+    const necesarios = t === 1 ? "se necesita 1" : `se necesitan ${t}`;
+    lineaAbogados.textContent =
+      `${verbo} ${aportan} de ${n} ${plantilla} y ${necesarios}, ` +
+      (hayDespacho ? "así que se recupera f(2), la parte del despacho." : "así que f(2) no se recupera.");
+  }
+
+  raiz.addEventListener("change", actualizar);
+  casos.hidden = true;
+  controles.hidden = false;
+  actualizar();
+</script>

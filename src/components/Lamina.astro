@@ -1,0 +1,29 @@
+---
+/*
+ * Una lámina rasterizada. El gris queda de respaldo sin JavaScript; raster.ts la trama.
+ * La descripción va en el marco porque el img se oculta cuando el lienzo ya está listo.
+ */
+interface Props {
+  nombre: string;
+  alt: string;
+  /** Tamaño en píxeles de CSS de cada celda de la retícula. */
+  celda?: number;
+  /** Para datos discretos (primos, tablas): remuestrea sin promediar. */
+  discreta?: boolean;
+  ajuste?: "cover" | "contain";
+  class?: string;
+}
+const { nombre, alt, celda = 2, discreta = false, ajuste = "contain", class: clase = "" } = Astro.props;
+---
+
+<div class:list={["lamina", clase]} role="img" aria-label={alt} data-lamina data-celda={celda}>
+  <img
+    src={`/laminas/${nombre}.webp`}
+    alt=""
+    loading="lazy"
+    data-ajuste={ajuste}
+    data-discreta={discreta ? "" : undefined}
+    style={ajuste === "contain" ? "object-fit: contain" : undefined}
+  />
+  <canvas aria-hidden="true"></canvas>
+</div>

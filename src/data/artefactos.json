@@ -1,0 +1,92 @@
+{
+  "archivos": [
+    {
+      "grupo": "documentos",
+      "nombre": "Arquitectura criptográfica de Secure Documents",
+      "descripcion": "Reporte técnico del equipo, del sistema a los módulos: flujos, esquemas, primitivas y decisiones.",
+      "archivo": "stic-06-arquitectura-criptografica.pdf",
+      "formato": "PDF",
+      "bytes": 444823,
+      "algoritmo": "SHA3-256",
+      "hash": "79d50e621e3773975faa63e9fed3e682732a502a9d49dc926cf380e8bfc49754"
+    },
+    {
+      "grupo": "documentos",
+      "nombre": "Inventario y guía de pruebas",
+      "descripcion": "66 pruebas con actor, pasos y resultado esperado, con corte del 27 de octubre de 2026.",
+      "archivo": "stic-07-inventario-pruebas-secure-documents.pdf",
+      "formato": "PDF",
+      "bytes": 282448,
+      "algoritmo": "SHA3-256",
+      "hash": "c56427a6b3a22fb192af57ab405a91993d404c0c870e24beba1801aeeadbc7c3"
+    },
+    {
+      "grupo": "documentos",
+      "nombre": "Práctica 05: RSASSA-PSS",
+      "descripcion": "Reporte individual de Eduardo Alonso Sánchez sobre firmas digitales con RSA.",
+      "archivo": "stic-05-rsassa-pss.pdf",
+      "formato": "PDF",
+      "bytes": 497661,
+      "algoritmo": "SHA3-256",
+      "hash": "4d987c2b61a84a87da43b823fa53a009b25f500fc6d2445af6b4778aa62631e1"
+    },
+    {
+      "grupo": "herramientas",
+      "nombre": "Kit de pruebas",
+      "descripcion": "Guía interactiva en HTML, corpus de 21 archivos y capturas sintéticas de la interfaz.",
+      "archivo": "secure-documents-kit-pruebas.zip",
+      "formato": "ZIP",
+      "bytes": 3513592,
+      "algoritmo": "SHA3-256",
+      "hash": "044a8ccbab133da90dc3451b8cbb59f13737ee67ed84148851a8031988047ed5"
+    },
+    {
+      "grupo": "herramientas",
+      "nombre": "Verificador de firmas",
+      "descripcion": "Script que comprueba una firma .sig.json con el CLI de openssl.",
+      "archivo": "verify-signature-sidecar.py",
+      "formato": "Python",
+      "bytes": 6198,
+      "algoritmo": "SHA3-256",
+      "hash": "4f92eddbdc73db0a6a91dbecbf3577746130ec9a4aa96ade24037938c91c3e15"
+    }
+  ],
+  "clientes": {
+    "version": "0.3.5",
+    "commit": "c53dae6",
+    "etiqueta": "clients-0.3.5-c53dae6-r40628378756",
+    "certificadoApk": {
+      "algoritmo": "SHA-256",
+      "hash": "0903ffa6288486b3c3e04ad51d5c57da98ff0a6b4842b09df1b9401abd41ea1b"
+    },
+    "paquetes": [
+      {
+        "nombre": "Android",
+        "archivo": "secure-documents-android.zip",
+        "formato": "ZIP",
+        "bytes": 13013475,
+        "algoritmo": "SHA-256",
+        "hash": "c8a4a62341c61909eb4581f7e08983af9a5d755e307d8110b626dd439a0d55bd",
+        "url": null
+      },
+      {
+        "nombre": "Linux",
+        "archivo": "secure-documents-linux.zip",
+        "formato": "ZIP",
+        "bytes": 128462547,
+        "algoritmo": "SHA-256",
+        "hash": "b3472faf882d4e9004c33ef9ac06415b829a2c6ca3ba5ac20a46cc25d70eccdd",
+        "url": null
+      },
+      {
+        "nombre": "Windows",
+        "archivo": "secure-documents-windows.zip",
+        "formato": "ZIP",
+        "bytes": 135684745,
+        "algoritmo": "SHA-256",
+        "hash": "a4fd2d654133e2d517f37a4088e28d179c2591bce889566f8e0944842666ec4d",
+        "url": null
+      }
+    ]
+  }
+}

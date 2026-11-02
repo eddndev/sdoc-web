@@ -1,0 +1,276 @@
+---
+/*
+ * Tira de bytes de un formato. La lista de campos siempre existe: es la vista en
+ * móvil y lo que queda sin JavaScript. Desde 768 px se suma una banda proporcional
+ * y, con JavaScript, la lista muestra sólo el campo enfocado.
+ */
+import type { Campo } from "../data/mecanismos";
+
+interface Props {
+  id: string;
+  etiqueta: string;
+  titulo: string;
+  total: number;
+  campos: Campo[];
+  nota?: string;
+  leyenda?: boolean;
+  class?: string;
+}
+const { id, etiqueta, titulo, total, campos, nota, leyenda = false, class: clase = "" } = Astro.props;
+
+/* Ancho de la banda a 768 px; debajo de 110 px el nombre no cabe en horizontal. */
+const ANCHO_BANDA = 704;
+let cursor = 0;
+const filas = campos.map((campo, i) => {
+  const offset = cursor;
+  cursor += campo.bytes;
+  return {
+    ...campo,
+    offset,
+    idFila: `${id}-${i}`,
+    vertical: (campo.bytes / total) * ANCHO_BANDA < 110,
+    porcentaje: (campo.bytes / total) * 100,
+  };
+});
+if (cursor !== total) throw new Error(`${id}: los campos suman ${cursor} B, no ${total} B`);
+---
+
+<figure class:list={["tira", clase]} data-tira>
+  <figcaption class="font-bold" set:html={titulo} />
+
+  {
+    leyenda && (
+      <p class="leyenda mt-2 text-nota">
+        <span class="muestra" data-tipo="dato" />
+        <span>campo del formato</span>
+        <span class="muestra" data-tipo="enlace" />
+        <span>identificador o digest</span>
+        <span class="muestra" data-tipo="foco" />
+        <span>valor central del formato</span>
+      </p>
+    )
+  }
+
+  <div class="banda mt-4" role="group" aria-label={`Campos de ${etiqueta}`}>
+    {
+      filas.map((fila) => (
+        <button
+          type="button"
+          class="campo"
+          data-campo
+          data-tipo={fila.tipo}
+          data-vertical={fila.vertical ? "" : undefined}
+          style={`flex-grow: ${fila.bytes}`}
+          aria-describedby={fila.idFila}
+          tabindex="-1"
+        >
+          <span class:list={["nombre", fila.codigo && "font-mono"]}>{fila.nombre}</span>
+          <span class="peso">
+            {fila.bytes}
+            <span class="unidad">B</span>
+          </span>
+        </button>
+      ))
+    }
+  </div>
+
+  <ol class="filas mt-3">
+    {
+      filas.map((fila) => (
+        <li id={fila.idFila} class="fila" data-fila data-tipo={fila.tipo}>
+          <div class="flex flex-wrap items-baseline justify-between gap-x-4">
+            <span class:list={["font-bold", fila.codigo && "font-mono text-[0.92em]"]}>{fila.nombre}</span>
+            <span class="text-nota">
+              offset {fila.offset}, {fila.bytes} B
+            </span>
+          </div>
+          <span class="barra" style={`width: ${fila.porcentaje}%`} aria-hidden="true" />
+          <p class="max-w-[38rem] text-nota" set:html={fila.descripcion} />
+        </li>
+      ))
+    }
+  </ol>
+
+  {nota && <p class="mt-3 max-w-[38rem] text-nota" set:html={nota} />}
+</figure>
+
+<style>
+  .tira {
+    --tira-dato: var(--color-verdin-palido);
+    --tira-sobre-dato: var(--color-tinta);
+    --tira-enlace: var(--color-tinta);
+    --tira-sobre-enlace: var(--color-verdin-palido);
+    --tira-foco: var(--color-cobre);
+    --tira-sobre-foco: var(--color-verdin-palido);
+  }
+
+  :global(.placa-bronce) .tira {
+    --tira-dato: var(--color-verdin);
+    --tira-sobre-dato: var(--color-tinta);
+    --tira-enlace: var(--color-verdin-palido);
+    --tira-sobre-enlace: var(--color-tinta);
+    --tira-foco: var(--color-cobre-vivo);
+    --tira-sobre-foco: var(--color-tinta);
+  }
+
+  [data-tipo="dato"] {
+    --relleno: var(--tira-dato);
+    --sobre: var(--tira-sobre-dato);
+  }
+
+  [data-tipo="enlace"] {
+    --relleno: var(--tira-enlace);
+    --sobre: var(--tira-sobre-enlace);
+  }
+
+  [data-tipo="foco"] {
+    --relleno: var(--tira-foco);
+    --sobre: var(--tira-sobre-foco);
+  }
+
+  .leyenda {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 0.5rem;
+  }
+
+  .muestra {
+    width: 0.9rem;
+    height: 0.9rem;
+    background: var(--relleno);
+  }
+
+  .leyenda > :global(span:nth-child(even):not(:last-child)) {
+    margin-right: 0.75rem;
+  }
+
+  .banda {
+    display: none;
+  }
+
+  .campo {
+    position: relative;
+    display: flex;
+    flex: 0 1 0%;
+    flex-direction: column;
+    justify-content: space-between;
+    min-width: 1.1rem;
+    overflow: hidden;
+    padding: 0.5rem 0.45rem;
+    text-align: left;
+    font-size: 0.85rem;
+    line-height: 1.15;
+    color: var(--sobre);
+    background: var(--relleno);
+  }
+
+  .campo[data-vertical] {
+    align-items: center;
+    padding-inline: 0;
+  }
+
+  .campo[data-vertical] .nombre {
+    writing-mode: vertical-rl;
+    white-space: nowrap;
+  }
+
+  .campo[data-vertical] .unidad {
+    display: none;
+  }
+
+  .peso {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-feature-settings: normal;
+  }
+
+  .campo:focus-visible {
+    z-index: 1;
+    outline: 3px solid var(--sobre);
+    outline-offset: -5px;
+  }
+
+  .campo[data-activo]::after {
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    height: 4px;
+    content: "";
+    background: var(--sobre);
+  }
+
+  .fila {
+    display: block;
+    padding-block: 0.6rem;
+    border-top: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+  }
+
+  .barra {
+    display: block;
+    min-width: 2px;
+    height: 0.5rem;
+    margin-block: 0.35rem;
+    background: var(--relleno);
+  }
+
+  @media (min-width: 48rem) {
+    .banda {
+      display: flex;
+      gap: 1px;
+      height: 10rem;
+    }
+
+    .tira[data-activa] .campo {
+      cursor: pointer;
+    }
+
+    .tira[data-activa] .filas {
+      min-height: 5.5rem;
+    }
+
+    .tira[data-activa] .fila:not([data-activo]) {
+      display: none;
+    }
+
+    .tira[data-activa] .fila {
+      border-top: 0;
+    }
+
+    .tira[data-activa] .barra {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  for (const tira of document.querySelectorAll<HTMLElement>("[data-tira]")) {
+    const campos = [...tira.querySelectorAll<HTMLButtonElement>("[data-campo]")];
+    const filas = [...tira.querySelectorAll<HTMLElement>("[data-fila]")];
+
+    const activar = (elegido: number) => {
+      filas.forEach((fila, i) => fila.toggleAttribute("data-activo", i === elegido));
+      campos.forEach((campo, i) => {
+        campo.toggleAttribute("data-activo", i === elegido);
+        campo.setAttribute("aria-current", String(i === elegido));
+        /* Tabulador: una parada por tira. Las flechas recorren sus campos. */
+        campo.tabIndex = i === elegido ? 0 : -1;
+      });
+    };
+
+    campos.forEach((campo, i) => {
+      campo.addEventListener("focus", () => activar(i));
+      campo.addEventListener("pointerenter", () => activar(i));
+      campo.addEventListener("click", () => activar(i));
+      campo.addEventListener("keydown", (evento) => {
+        const paso = evento.key === "ArrowRight" ? 1 : evento.key === "ArrowLeft" ? -1 : 0;
+        if (!paso) return;
+        evento.preventDefault();
+        campos[(i + paso + campos.length) % campos.length].focus();
+      });
+    });
+
+    activar(Math.max(0, campos.findIndex((campo) => campo.dataset.tipo === "foco")));
+    tira.dataset.activa = "";
+  }
+</script>

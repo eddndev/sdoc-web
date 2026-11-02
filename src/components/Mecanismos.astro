@@ -1,0 +1,427 @@
+---
+/* Mecanismos en el orden en que un documento los usa. Cada bloque tiene su propia composición. */
+import Lamina from "./Lamina.astro";
+import Reparto from "./Reparto.astro";
+import TiraBytes from "./TiraBytes.astro";
+import {
+  cadena,
+  contextoSden,
+  digests,
+  ejemplosPrefijo,
+  etiquetas,
+  participacion,
+  perfiles,
+  prefijo,
+  sdlg,
+  sobre,
+} from "../data/mecanismos";
+
+const margen = "px-4 sm:px-8 lg:px-12";
+const numeral = "block text-titulo leading-none font-black [font-feature-settings:'lnum']";
+const titulo = "text-[clamp(1.75rem,3.2vw,2.5rem)] font-black";
+const fila = "border-t border-tinta/30";
+---
+
+<section id="mecanismos" class="pt-24 pb-24 lg:pt-36 lg:pb-36">
+  <div class={margen}>
+    <h2 class="text-titulo font-black">Mecanismos criptográficos</h2>
+    <p class="mt-6 max-w-[38rem]">
+      Van en el orden en que un documento los usa: primero un equipo con certificados, luego una sesión, y después el
+      archivo se sella, se reparte y se firma. SHA3-256 va al final porque aparece en todos los pasos anteriores.
+    </p>
+  </div>
+
+  <ol class="mt-20 lg:mt-28">
+    <!-- 1. Alta: la cadena llega al borde derecho y acompaña al texto. -->
+    <li class="grid lg:grid-cols-12 lg:gap-x-8">
+      <div class:list={[margen, "lg:col-span-6 lg:pr-0"]}>
+        <h3 class={titulo}>
+          <span aria-hidden="true" class:list={[numeral, "mb-3 text-cobre"]}>1</span>
+          Un equipo prueba sus claves y recibe certificados
+        </h3>
+      </div>
+
+      <figure class="mt-8 lg:col-span-6 lg:col-start-7 lg:row-span-2 lg:row-start-1 lg:mt-0">
+        <Lamina
+          nombre="cadena"
+          celda={3}
+          class="aspect-[14/15] w-full"
+          alt="Tres eslabones de cadena enlazados en diagonal, dibujados con tramado de puntos: raíz, emisor y dispositivo."
+        />
+        <figcaption class:list={[margen, "mt-2 text-nota"]}>Raíz, emisor y dispositivo.</figcaption>
+      </figure>
+
+      <div class:list={[margen, "mt-8 lg:col-span-6 lg:pr-0"]}>
+        <div class="max-w-[38rem] space-y-4">
+          <p>
+            Cada dispositivo genera sus propias claves: una de firma, secp256k1 o RSA-3072 según la persona, y una X25519
+            de recepción. La invitación de alta trae el SHA3-256 de la raíz, y el equipo acepta la raíz descargada sólo si
+            coincide. Después, un administrador u otro equipo activo aprueba la inscripción, que vence en 24 h.
+          </p>
+          <p>
+            La CA no confía en una solicitud tipo CSR y nunca recibe privadas. Cifra con HPKE un secreto de 32 B hacia la
+            X25519, y el equipo lo abre y firma <code>SHA3-256(T ‖ secreto)</code>, donde <i>T</i> es el transcript de
+            inscripción. Abrirlo prueba la X25519 y la firma prueba la otra clave. Con las dos pruebas, el emisor firma a la
+            vez dos certificados, así que nunca existe un par parcial.
+          </p>
+        </div>
+
+        <table class="mt-8 w-full text-left text-nota">
+          <thead>
+            <tr>
+              <th scope="col" class="py-2 pr-4 font-bold">Certificado</th>
+              <th scope="col" class="py-2 pr-4 font-bold">Clave</th>
+              <th scope="col" class="py-2 font-bold">Vigencia</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              cadena.map((eslabon) => (
+                <tr class={fila}>
+                  <td class="py-2 pr-4">
+                    <code>{eslabon.nombre}</code>
+                    <span class="block">{eslabon.detalle}</span>
+                  </td>
+                  <td class="py-2 pr-4">{eslabon.clave}</td>
+                  <td class="py-2 whitespace-nowrap">{eslabon.vigencia}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+        <p class="mt-4 max-w-[38rem] text-nota">
+          El reto de la CA vence a los 300 s como máximo y 5 pruebas erróneas bloquean la inscripción. <i>T</i> mide 221 B con el
+          perfil 1 y 555 B con el perfil 2.
+        </p>
+      </div>
+    </li>
+
+    <!-- 2. Sesión: sin lámina, la tira ocupa todo el ancho. -->
+    <li class:list={[margen, "mt-28 lg:mt-40"]}>
+      <div class="grid lg:grid-cols-12 lg:gap-x-8">
+        <h3 class:list={[titulo, "lg:col-span-5"]}>
+          <span aria-hidden="true" class:list={[numeral, "mb-3 text-cobre"]}>2</span>
+          La sesión se abre firmando un reto
+        </h3>
+        <div class="mt-6 max-w-[38rem] space-y-4 lg:col-span-6 lg:col-start-7 lg:mt-0">
+          <p>
+            No hay contraseña en el servidor. <code>sdocd</code> crea un reto que vence a los 120 s, con 4 retos pendientes
+            como máximo por dispositivo, y el equipo firma <code>SHA3-256(SDOC-LOGIN-SIGNATURE-v1 ‖ SDLG)</code> con la
+            clave de su certificado vigente.
+          </p>
+          <p>
+            El servidor verifica firma, cadena y CRL, consume el reto y entrega un token aleatorio de 32 B. Guarda sólo
+            SHA3-256(token), y la sesión vence a los 900 s sin renovación.
+          </p>
+        </div>
+      </div>
+      <TiraBytes {...sdlg} leyenda class="mt-12" />
+    </li>
+
+    <!-- 3. Sellado: la S-box cruza la página de borde a borde. -->
+    <li class="mt-28 lg:mt-40">
+      <div class={margen}>
+        <h3 class:list={[titulo, "max-w-[38rem]"]}>
+          <span aria-hidden="true" class:list={[numeral, "mb-3 text-cobre"]}>3</span>
+          El documento se sella con una clave nueva
+        </h3>
+      </div>
+
+      <figure class="mt-8">
+        <Lamina
+          nombre="sbox"
+          celda={3}
+          class="aspect-[160/116] w-full lg:max-w-[74rem]"
+          alt="Relieve isométrico de 16 por 16 columnas tramadas; la altura de cada columna es un byte de la S-box de AES."
+        />
+        <figcaption class:list={[margen, "mt-2 text-nota"]}>
+          S-box de AES calculada. Cada altura es el byte sustituido.
+        </figcaption>
+      </figure>
+
+      <div class:list={[margen, "mt-10 grid gap-y-10 lg:grid-cols-12 lg:gap-x-8"]}>
+        <div class="max-w-[38rem] space-y-4 lg:col-span-5">
+          <p>
+            El cliente empaqueta el archivo en <code>SDCF</code> y lo cifra con AES-256-GCM bajo <i>K</i><sub>doc</sub>, una
+            clave de 32 B nueva en cada versión, con un nonce de 12 B. Clave y nonce salen del CSPRNG. El nombre y el MIME viajan
+            dentro de <code>SDCF</code>, así que el servidor tampoco los recibe.
+          </p>
+          <p>
+            La AAD de GCM es <code>H = SHA3-256(SDMF)</code>, de modo que el ciphertext no se puede mover a otro manifiesto.
+            <code>SDMF</code> no tiene firma propia: la cubre la firma del autor sobre
+            <code>SHA3-256(SDOC-DOCUMENT-SIGN-v1 ‖ B)</code>, donde <i>B</i> es el sobre sin la longitud de esa firma ni la firma.
+          </p>
+        </div>
+
+        <div class="lg:col-span-6 lg:col-start-7">
+          <table class="w-full text-left text-nota">
+            <caption class="pb-2 text-left font-bold">
+              Sobre <code>SDEV</code>, 16&nbsp;980&nbsp;274 B como máximo
+            </caption>
+            <thead class="sr-only">
+              <tr>
+                <th scope="col">Parte</th>
+                <th scope="col">Tamaño</th>
+              </tr>
+            </thead>
+            <tbody>
+              {
+                sobre.map((parte) => (
+                  <tr class={fila}>
+                    <td class="py-2 pr-4">{parte.parte}</td>
+                    <td class="py-2 text-right font-mono text-[0.88em] [font-feature-settings:normal]">{parte.tamano}</td>
+                  </tr>
+                ))
+              }
+            </tbody>
+          </table>
+          <p class="mt-4 text-nota">
+            Con dos tamaños, el primero es del perfil 1 y el segundo del perfil 2. No se admiten bytes después de la firma.
+          </p>
+        </div>
+      </div>
+    </li>
+
+    <!-- 4. Reparto: placa de bronce, con la tabla de GF(2^8) y el control. -->
+    <li class:list={[margen, "placa-bronce mt-28 py-20 lg:mt-40 lg:py-28"]}>
+      <div class="grid lg:grid-cols-12 lg:gap-x-8">
+        <div class="lg:col-span-6 lg:col-start-7">
+          <h3 class={titulo}>
+            <span aria-hidden="true" class:list={[numeral, "mb-3 text-cobre-vivo"]}>4</span>
+            <span><i>K</i><sub>doc</sub> se reparte según el modo del caso</span>
+          </h3>
+          <div class="mt-6 max-w-[38rem] space-y-4">
+            <p>
+              En modo conjunto, <i>K</i><sub>doc</sub> pasa por Shamir anidado: 32 polinomios sobre GF(2<sup>8</sup>) con
+              reducción <code>0x11b</code>, uno por byte. El nivel exterior es 2 de 2 entre cliente y despacho. El interior
+              reparte con <i>t</i> de <i>N</i> la parte del despacho, que no se guarda, entre los abogados.
+            </p>
+            <p>
+              Cada participación viaja en un <code>SDSP</code>, cifrada con HPKE hacia la X25519 de recepción. El modo base
+              de HPKE no autentica al emisor, por eso el <code>SDSP</code> lleva una firma aparte. Mantenemos el modo conjunto
+              para los clientes que piden más secreto.
+            </p>
+          </div>
+        </div>
+
+        <figure class="mt-10 lg:order-first lg:col-span-5 lg:mt-0">
+          <Lamina
+            nombre="gf256"
+            discreta
+            class="aspect-square w-full max-w-[512px] [&>img]:mix-blend-normal"
+            alt="Tabla de multiplicar de GF(2 a la 8) con reducción 0x11b, de 256 por 256: tramas regulares en la esquina de los valores pequeños y textura densa en el resto."
+          />
+          <figcaption class="mt-2 max-w-[512px] text-nota">
+            Tabla de multiplicar de GF(2<sup>8</sup>) con <code>0x11b</code>, el campo de Shamir.
+          </figcaption>
+        </figure>
+      </div>
+
+      <Reparto class="mt-16 lg:mt-24" />
+
+      <p class="mt-4 max-w-[38rem]">
+        Usamos el modo directo en contratos bilaterales, porque cliente y abogado responsable deben abrir el documento para
+        firmar su conformidad. El modo lo fija el caso, así que los dos no se mezclan dentro de una versión.
+      </p>
+
+      <TiraBytes {...participacion} class="mt-16" />
+    </li>
+
+    <!-- 5. Perfiles: manda la tabla; la espiral queda contenida a su tamaño de datos. -->
+    <li class:list={[margen, "mt-28 lg:mt-40"]}>
+      <div class="grid lg:grid-cols-12 lg:gap-x-8">
+        <div class="lg:col-span-7">
+          <h3 class:list={[titulo, "max-w-[38rem]"]}>
+            <span aria-hidden="true" class:list={[numeral, "mb-3 text-cobre"]}>5</span>
+            Cada persona firma con uno de dos perfiles
+          </h3>
+          <div class="mt-6 max-w-[38rem] space-y-4">
+            <p>
+              ECDSA sobre secp256k1 y RSASSA-PSS-3072 conviven en el protocolo y ninguno reemplaza al otro. El administrador
+              fija <code>signature_scheme</code> por persona, y en un mismo caso puede haber personas con esquemas
+              distintos. Los dos perfiles dan 128 bits.
+            </p>
+            <p>
+              El perfil sale de la clave certificada del firmante, nunca de un campo del mensaje, y el byte 13 del prefijo
+              queda dentro de lo firmado. Cambiar de esquema significa inscribir equipos nuevos y revocar los anteriores.
+            </p>
+          </div>
+        </div>
+
+        <figure class="mt-10 lg:col-span-4 lg:col-start-9 lg:mt-0">
+          <Lamina
+            nombre="ulam"
+            discreta
+            celda={1}
+            class="aspect-square w-full max-w-[402px]"
+            alt="Espiral de Ulam de 201 por 201: puntos dispersos, uno por cada número primo, con diagonales apenas visibles."
+          />
+          <figcaption class="mt-2 max-w-[402px] text-nota">
+            Espiral de Ulam de 201 × 201. Cada punto es un primo, como los que componen <i>n</i> en RSA.
+          </figcaption>
+        </figure>
+      </div>
+
+      <table role="table" aria-label="Comparación de los dos perfiles de firma" class="mt-12 block w-full text-left text-nota sm:table">
+        <thead role="rowgroup" class="hidden sm:table-header-group">
+          <tr role="row">
+            <th role="columnheader" scope="col" class="py-2 pr-4 font-bold">Aspecto</th>
+            <th role="columnheader" scope="col" class="py-2 pr-4 font-bold">Perfil 1</th>
+            <th role="columnheader" scope="col" class="py-2 font-bold">Perfil 2</th>
+          </tr>
+        </thead>
+        <tbody role="rowgroup" class="block sm:table-row-group">
+          {
+            perfiles.map((perfil) => (
+              <tr role="row" class:list={[fila, "block py-2 sm:table-row sm:py-0"]}>
+                <th role="rowheader" scope="row" class="block pr-4 text-left font-bold sm:table-cell sm:py-2 sm:font-normal">
+                  {perfil.aspecto}
+                </th>
+                <td role="cell" class="block pr-4 sm:table-cell sm:py-2">
+                  <span class="font-bold sm:hidden">Perfil 1: </span>
+                  <Fragment set:html={perfil.uno} />
+                </td>
+                <td role="cell" class="block sm:table-cell sm:py-2">
+                  <span class="font-bold sm:hidden">Perfil 2: </span>
+                  <Fragment set:html={perfil.dos} />
+                </td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+
+      <TiraBytes {...prefijo} class="mt-16" />
+      <dl class="mt-4 text-nota">
+        {
+          ejemplosPrefijo.map((ejemplo) => (
+            <div class="sm:flex sm:gap-x-4">
+              <dt><code>SDEV</code> conjunto, {ejemplo.perfil.toLowerCase()}</dt>
+              <dd>
+                <code>{ejemplo.hex}</code>
+              </dd>
+            </div>
+          ))
+        }
+      </dl>
+    </li>
+
+    <!-- 6. Conformidad: sin lámina; la fórmula del compromiso ocupa su lugar. -->
+    <li class:list={[margen, "mt-28 lg:mt-40"]}>
+      <h3 class:list={[titulo, "max-w-[38rem]"]}>
+        <span aria-hidden="true" class:list={[numeral, "mb-3 text-cobre"]}>6</span>
+        Cliente y abogado firman la misma versión
+      </h3>
+
+      <div class="mt-8 grid gap-y-8 lg:grid-cols-12 lg:gap-x-8">
+        <div class="max-w-[38rem] space-y-4 lg:col-span-6 lg:col-start-7 lg:row-start-1">
+          <p>
+            La firma de conformidad es un <code>SDEN</code> que cada parte produce con la clave de firma de su dispositivo.
+            La versión queda completa cuando existen los dos, el del cliente y el del abogado responsable.
+          </p>
+          <p>
+            Para el contenido usamos un compromiso con sal y no un SHA3-256(SDCF) simple. Con un hash simple, quien vea el
+            digest podría confirmar adivinanzas sobre contratos de plantilla, en los que sólo cambian nombres, montos o
+            fechas. La sal sale de <i>K</i><sub>doc</sub>, así que quienes abren la misma versión obtienen el mismo
+            <code>commit</code> sin coordinarse.
+          </p>
+          <p>
+            Si los <code>commit</code> difieren, el servidor responde 409 <code>commit_mismatch</code>: los dos firmantes
+            abrieron contenidos distintos bajo la misma versión. No usamos sello de tiempo, así que el <code>SDEN</code> no
+            acredita cuándo se firmó. Tampoco prueba que la persona leyó el documento.
+          </p>
+        </div>
+
+        <div class="space-y-5 lg:col-span-5 lg:row-start-1">
+          <p>
+            <code>sal = SHA3-256(SDOC-ENDORSE-SALT-v1 ‖ 00 ‖ K<sub>doc</sub>)</code>
+          </p>
+          <p>
+            <code>commit = SHA3-256(SDOC-ENDORSE-COMMIT-v1 ‖ 00 ‖ sal ‖ SDCF)</code>
+          </p>
+          <p class="text-nota">
+            <code>SDEN</code> mide 228..292 B con el perfil 1 y 605 B con el perfil 2.
+          </p>
+        </div>
+      </div>
+
+      <TiraBytes {...contextoSden} class="mt-12" />
+    </li>
+  </ol>
+
+  <!-- SHA3-256 no es un paso: cruza los anteriores. El estado de Keccak cierra la sección de borde a borde. -->
+  <div class="mt-28 lg:mt-40">
+    <div class="flex flex-col lg:relative lg:block">
+      <Lamina
+        nombre="keccak"
+        celda={3}
+        class="order-first aspect-[16/11] w-full"
+        alt="Cubos isométricos tramados, uno por cada bit en 1 del estado de SHA3-256 tras absorber SDOC, en las primeras 22 rebanadas de 64."
+      />
+      <div class:list={[margen, "mt-8 lg:absolute lg:bottom-6 lg:left-0 lg:mt-0 lg:w-[32%] lg:min-w-[24rem] lg:pr-0"]}>
+        <h3 class={titulo}>SHA3-256 aparece en todo el protocolo</h3>
+      </div>
+    </div>
+
+    <div class:list={[margen, "mt-8 grid gap-y-10 lg:mt-10 lg:grid-cols-12 lg:gap-x-8"]}>
+      <div class="max-w-[38rem] space-y-4 lg:col-span-5">
+        <p class="text-nota">
+          Estado de SHA3-256 tras absorber <code>SDOC</code>: primeras 22 rebanadas de 64, con un cubo por cada bit en 1.
+        </p>
+        <p>
+          En transcripts, firmas, identificadores de clave y compromisos usamos un solo hash, con 128 bits contra
+          colisiones. Cada tipo de mensaje lleva su etiqueta <code>SDOC-*-v1</code>, así que una firma no sirve en otro
+          contexto.
+        </p>
+        <p>
+          HKDF-SHA256 sólo aparece dentro de HPKE, y <code>SDAT</code>, la atestación del administrador, usa SHA-256 en una
+          configuración distinta del perfil 2.
+        </p>
+
+        <table class="w-full text-left text-nota">
+          <caption class="pb-2 text-left font-bold">Digests</caption>
+          <thead class="sr-only">
+            <tr>
+              <th scope="col">Nombre</th>
+              <th scope="col">Cálculo</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              digests.map((digest) => (
+                <tr class={fila}>
+                  <td class="py-2 pr-4">
+                    <code class="whitespace-nowrap">{digest.nombre}</code>
+                  </td>
+                  <td class="py-2">{digest.calculo}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <table class="w-full self-start text-left text-nota lg:col-span-6 lg:col-start-7">
+        <caption class="pb-2 text-left font-bold">Etiquetas de dominio</caption>
+        <thead class="sr-only">
+          <tr>
+            <th scope="col">Etiqueta</th>
+            <th scope="col">Qué firma</th>
+          </tr>
+        </thead>
+        <tbody>
+          {
+            etiquetas.map((entrada) => (
+              <tr class={fila}>
+                <td class="py-2 pr-4">
+                  <code>{entrada.etiqueta}</code>
+                </td>
+                <td class="py-2">{entrada.cubre}</td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>

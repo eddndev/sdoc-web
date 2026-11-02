@@ -1,0 +1,77 @@
+---
+/*
+ * Primitivas: la tabla del reporte, tal cual. Abajo de lg cada fila se apila y cada dato
+ * muestra su encabezado; los roles conservan la semántica de tabla al cambiar display.
+ */
+import { columnas, primitivas, trozos } from "../data/primitivas";
+---
+
+<section id="primitivas" class="px-4 py-20 sm:px-8 lg:px-12 lg:py-28">
+  <div>
+    <div>
+      <h2 id="primitivas-titulo" class="text-titulo font-black">Primitivas</h2>
+      <p class="mt-5 max-w-[38rem]">
+        La fuerza en bits sigue la tabla 2 de SP 800-57: todas las primitivas asimétricas quedan en 128 bits. Ningún
+        perfil debilita a otro dentro de un caso mixto.
+      </p>
+    </div>
+  </div>
+
+  <table
+    role="table"
+    aria-labelledby="primitivas-titulo"
+    class="mt-14 w-full text-nota [font-feature-settings:'lnum'_1] max-lg:block"
+  >
+    <thead role="rowgroup" class="max-lg:sr-only">
+      <tr role="row" class="border-b border-tinta">
+        <th role="columnheader" scope="col" class="pr-5 pb-2 text-left align-bottom font-extrabold lg:w-[18%]">
+          Primitiva
+        </th>
+        {
+          columnas.map(({ etiqueta, ancho }) => (
+            <th
+              role="columnheader"
+              scope="col"
+              class:list={["pb-2 text-left align-bottom font-extrabold not-last:pr-5", ancho]}
+            >
+              {etiqueta}
+            </th>
+          ))
+        }
+      </tr>
+    </thead>
+
+    <tbody role="rowgroup" class="divide-y divide-tinta/30 max-lg:block">
+      {
+        primitivas.map((fila) => (
+          <tr role="row" class="max-lg:block max-lg:py-5 max-lg:first:pt-0">
+            <th role="rowheader" scope="row" class="text-left align-top font-extrabold max-lg:block max-lg:pb-2 lg:py-3 lg:pr-5">
+              {trozos(fila.primitiva).map(({ tipo, texto }) => (tipo === "code" ? <code>{texto}</code> : texto))}
+            </th>
+            {columnas.map(({ campo, etiqueta }) => (
+              <td
+                role="cell"
+                data-etiqueta={etiqueta}
+                class="align-top max-lg:grid max-lg:grid-cols-[5.5rem_minmax(0,1fr)] max-lg:gap-x-3 max-lg:not-last:pb-1 max-lg:before:font-bold max-lg:before:content-[attr(data-etiqueta)] lg:py-3 lg:not-last:pr-5"
+              >
+                <span>
+                  {trozos(fila[campo]).map(({ tipo, texto }) =>
+                    tipo === "code" ? (
+                      <code>{texto}</code>
+                    ) : tipo === "sub" ? (
+                      <sub>{texto}</sub>
+                    ) : tipo === "sup" ? (
+                      <sup>{texto}</sup>
+                    ) : (
+                      texto
+                    ),
+                  )}
+                </span>
+              </td>
+            ))}
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+</section>
