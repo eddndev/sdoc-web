@@ -1,6 +1,6 @@
 /*
- * Copia los entregables a public/descargas/ y escribe src/data/artefactos.json.
- * El tamaño y el hash se toman de la copia, que es lo que el sitio sirve.
+ * Reúne los entregables en .artefactos/ y escribe src/data/artefactos.json. El tamaño y
+ * el hash se toman de la copia, que es lo que `pnpm artefactos:subir` manda a R2.
  * Si falta un archivo fuente, se detiene antes de escribir el JSON.
  */
 import { createHash } from "node:crypto";
@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 
 const raiz = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const stic = resolve(raiz, "..");
-const destino = join(raiz, "public", "descargas");
+const destino = join(raiz, ".artefactos");
 const salida = join(raiz, "src", "data", "artefactos.json");
 
 const FORMATOS = { ".pdf": "PDF", ".zip": "ZIP", ".py": "Python" };
@@ -48,7 +48,7 @@ const LOCALES = [
   },
 ];
 
-/* Los clientes no se copian: el repositorio es privado y los paquetes pesan demasiado. */
+/* Los clientes salen del release del repositorio privado; ver subir-artefactos.mjs. */
 const CLIENTES = {
   version: "0.3.5",
   commit: "c53dae6",
@@ -65,7 +65,6 @@ const CLIENTES = {
       bytes: 13013475,
       algoritmo: "SHA-256",
       hash: "c8a4a62341c61909eb4581f7e08983af9a5d755e307d8110b626dd439a0d55bd",
-      url: null,
     },
     {
       nombre: "Linux",
@@ -74,7 +73,6 @@ const CLIENTES = {
       bytes: 128462547,
       algoritmo: "SHA-256",
       hash: "b3472faf882d4e9004c33ef9ac06415b829a2c6ca3ba5ac20a46cc25d70eccdd",
-      url: null,
     },
     {
       nombre: "Windows",
@@ -83,7 +81,6 @@ const CLIENTES = {
       bytes: 135684745,
       algoritmo: "SHA-256",
       hash: "a4fd2d654133e2d517f37a4088e28d179c2591bce889566f8e0944842666ec4d",
-      url: null,
     },
   ],
 };
@@ -107,4 +104,4 @@ const archivos = LOCALES.map(({ fuente, ...entrada }) => {
 });
 
 writeFileSync(salida, `${JSON.stringify({ archivos, clientes: CLIENTES }, null, 2)}\n`);
-console.log(`${archivos.length} archivos en public/descargas, datos en src/data/artefactos.json`);
+console.log(`${archivos.length} archivos en .artefactos, datos en src/data/artefactos.json`);

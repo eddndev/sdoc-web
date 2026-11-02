@@ -14,11 +14,21 @@ const { titulo, descripcion } = Astro.props;
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={descripcion} />
-    <meta name="theme-color" content="#8dbfae" />
+    <meta name="theme-color" content="#192f32" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <title>{titulo}</title>
+    <script is:inline>
+      try {
+        if (document.createElement("canvas").getContext("webgl2")) document.documentElement.classList.add("webgl2");
+      } catch {}
+    </script>
   </head>
-  <body class="placa-verdin antialiased">
+  <body class="placa-metal antialiased">
+    <canvas data-patina aria-hidden="true" class="fixed inset-x-0 top-0 -z-10 h-lvh w-full"></canvas>
     <slot />
+    <script>
+      import { iniciarPatina } from "../scripts/patina";
+      iniciarPatina();
+    </script>
   </body>
 </html>

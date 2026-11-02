@@ -11,12 +11,14 @@ interface Props {
   /** Para datos discretos (primos, tablas): remuestrea sin promediar. */
   discreta?: boolean;
   ajuste?: "cover" | "contain";
+  /** Escena de escenas.ts que la reemplaza en vivo si hay WebGL2. */
+  escena?: string;
   class?: string;
 }
-const { nombre, alt, celda = 2, discreta = false, ajuste = "contain", class: clase = "" } = Astro.props;
+const { nombre, alt, celda = 2, discreta = false, ajuste = "contain", escena, class: clase = "" } = Astro.props;
 ---
 
-<div class:list={["lamina", clase]} role="img" aria-label={alt} data-lamina data-celda={celda}>
+<div class:list={["lamina", clase]} role="img" aria-label={alt} data-lamina data-celda={celda} data-escena={escena}>
   <img
     src={`/laminas/${nombre}.webp`}
     alt=""

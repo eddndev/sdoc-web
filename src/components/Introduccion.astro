@@ -1,6 +1,7 @@
 ---
 /* Introducción: el problema que tomamos y dónde está el detalle. */
 import artefactos from "../data/artefactos.json";
+import { URL_ARTEFACTOS } from "../data/sitio";
 
 const reporte = artefactos.archivos.find((entrada) => entrada.archivo.includes("arquitectura"))!;
 ---
@@ -14,7 +15,7 @@ const reporte = artefactos.archivos.find((entrada) => entrada.archivo.includes("
     documento antes de publicarlo.
   </p>
   <p class="mt-6 max-w-[38rem]">
-    Este sitio resume el <a href={`/descargas/${reporte.archivo}`}>reporte de arquitectura</a>. Los quince casos de uso
+    Este sitio resume el <a href={`${URL_ARTEFACTOS}/${reporte.archivo}`}>reporte de arquitectura</a>. Los quince casos de uso
     y el detalle de cada formato están en el PDF.
   </p>
 </section>

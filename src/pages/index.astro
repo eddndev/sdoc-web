@@ -5,7 +5,6 @@ import Introduccion from "../components/Introduccion.astro";
 import Arquitectura from "../components/Arquitectura.astro";
 import Mecanismos from "../components/Mecanismos.astro";
 import Primitivas from "../components/Primitivas.astro";
-import Limites from "../components/Limites.astro";
 import Descargas from "../components/Descargas.astro";
 import Pie from "../components/Pie.astro";
 ---
@@ -15,17 +14,18 @@ import Pie from "../components/Pie.astro";
   descripcion="Arquitectura, mecanismos criptográficos y entregables de un proyecto escolar de Selected Topics in Cryptography."
 >
   <Portada />
-  <main>
+  <main class="velo">
     <Introduccion />
     <Arquitectura />
     <Mecanismos />
     <Primitivas />
-    <Limites />
     <Descargas />
   </main>
   <Pie />
   <script>
+    import { iniciarEscenas } from "../scripts/escenas";
     import { iniciarLaminas } from "../scripts/raster";
+    iniciarEscenas();
     iniciarLaminas();
   </script>
 </Base>

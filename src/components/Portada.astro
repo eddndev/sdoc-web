@@ -1,10 +1,15 @@
 ---
-/* Portada: la placa se revela una vez al cargar y el puntero bruñe la pátina. */
+/* Portada: el cielo y la dona se revelan una vez al cargar; la dona responde al puntero. */
 ---
 
-<header class="relative min-h-svh overflow-hidden">
+<header class="velo-portada relative min-h-svh overflow-hidden">
   <div class="lamina absolute inset-x-0 top-0 h-[58svh] sm:h-full" data-lamina data-portada data-celda="2">
-    <img src="/laminas/hero.webp" alt="" data-foco="100 42" data-foco-angosto="92 30" />
+    <img src="/laminas/hero.webp" alt="" />
+    <canvas aria-hidden="true"></canvas>
+  </div>
+
+  <div class="dona lamina" data-dona data-celda="2">
+    <img src="/laminas/dona.webp" alt="" data-ajuste="contain" style="object-fit: contain" />
     <canvas aria-hidden="true"></canvas>
   </div>
 
@@ -13,12 +18,11 @@
       <a href="#arquitectura">Arquitectura</a>
       <a href="#mecanismos">Mecanismos</a>
       <a href="#primitivas">Primitivas</a>
-      <a href="#limites">Límites</a>
       <a href="#descargas">Descargas</a>
     </nav>
 
     <div>
-      <h1 class="text-[length:var(--text-portada)] leading-[0.86] font-black tracking-[-0.03em]">
+      <h1 class="text-[length:var(--text-portada)] leading-[0.86] font-black tracking-[-0.03em] [text-shadow:0_0_0.14em_rgb(11_28_30/0.8)]">
         Secure<br />Documents
       </h1>
       <p class="mt-6 max-w-[34rem]">
@@ -29,44 +33,72 @@
   </div>
 </header>
 
-<script>
-  import gsap from "gsap";
-  import { Lamina } from "../scripts/raster";
-
-  const marco = document.querySelector<HTMLElement>("[data-portada]")!;
-  const fuente = marco.querySelector("img")!;
-  const lienzo = marco.querySelector("canvas")!;
-  const quieto = matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-  function encender() {
-    const lamina = new Lamina(fuente, lienzo, Number(marco.dataset.celda));
-    lamina.revelado.avance = quieto ? 1 : 0;
-    lamina.medir();
-    marco.dataset.listo = "";
-    new ResizeObserver(() => lamina.medir()).observe(marco);
-
-    if (!quieto) {
-      gsap.to(lamina.revelado, { avance: 1, duration: 2.2, ease: "power2.inOut", onUpdate: () => lamina.pintar() });
-      const contenedor = marco.parentElement!;
-      const radio = 26;
-      contenedor.addEventListener("pointermove", (evento) => {
-        if (evento.pointerType !== "mouse") return;
-        const caja = marco.getBoundingClientRect();
-        gsap.to(lamina.revelado, {
-          x: (evento.clientX - caja.left) / lamina.celda,
-          y: (evento.clientY - caja.top) / lamina.celda,
-          radio,
-          duration: 0.35,
-          overwrite: "auto",
-          onUpdate: () => lamina.pintar(),
-        });
-      });
-      contenedor.addEventListener("pointerleave", () => {
-        gsap.to(lamina.revelado, { radio: 0, duration: 0.5, overwrite: "auto", onUpdate: () => lamina.pintar() });
-      });
-    }
+<style>
+  /*
+   * El lienzo es mayor que el toro porque necesita aire para inclinarse. Todo se mide
+   * sobre --lado, que depende del alto, para que quepa completo en cualquier proporción.
+   */
+  .dona {
+    --lado: min(130vw, 68svh);
+    position: absolute;
+    top: calc(9svh - var(--lado) * 0.19);
+    right: calc(var(--lado) * -0.11);
+    width: var(--lado);
+    aspect-ratio: 1;
   }
 
-  if (fuente.complete && fuente.naturalWidth) encender();
-  else fuente.addEventListener("load", encender, { once: true });
+  /* Sólo en pantallas apaisadas cabe junto al texto; en vertical va arriba de él. */
+  @media (min-width: 40rem) and (min-aspect-ratio: 11/10) {
+    .dona {
+      --lado: min(108svh, 74vw - 6rem);
+      top: auto;
+      right: calc(var(--lado) * -0.12);
+      bottom: calc(var(--lado) * -0.07);
+    }
+  }
+</style>
+
+<script>
+  import gsap from "gsap";
+  import { DONA } from "../scripts/escenas";
+  import { Objeto3D } from "../scripts/objeto";
+  import { Lamina } from "../scripts/raster";
+
+  const quieto = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const avanceInicial = quieto ? 1 : 0;
+
+  /* Prepara una lámina tramada cuando su imagen ya cargó. */
+  function montar(marco: HTMLElement, alListo: (lamina: Lamina) => void) {
+    const fuente = marco.querySelector("img")!;
+    const lienzo = marco.querySelector("canvas")!;
+    const encender = () => {
+      const lamina = new Lamina(fuente, lienzo, Number(marco.dataset.celda));
+      lamina.revelado.avance = avanceInicial;
+      lamina.medir();
+      marco.dataset.listo = "";
+      new ResizeObserver(() => lamina.medir()).observe(marco);
+      alListo(lamina);
+    };
+    if (fuente.complete && fuente.naturalWidth) encender();
+    else fuente.addEventListener("load", encender, { once: true });
+  }
+
+  function revelar(estado: { avance: number }, pintar: () => void) {
+    if (!quieto) gsap.to(estado, { avance: 1, duration: 2.2, ease: "power2.inOut", onUpdate: pintar });
+  }
+
+  montar(document.querySelector<HTMLElement>("[data-portada]")!, (cielo) => {
+    revelar(cielo.revelado, () => cielo.pintar());
+  });
+
+  const marcoDona = document.querySelector<HTMLElement>("[data-dona]")!;
+  const dona = Objeto3D.crear(marcoDona, DONA);
+  if (dona) {
+    dona.estado.avance = avanceInicial;
+    dona.pintar();
+    revelar(dona.estado, () => dona.pintar());
+    if (!quieto) dona.escuchar(marcoDona.parentElement!);
+  } else {
+    montar(marcoDona, (lamina) => revelar(lamina.revelado, () => lamina.pintar()));
+  }
 </script>

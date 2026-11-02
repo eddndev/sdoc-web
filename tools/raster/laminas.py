@@ -2,11 +2,12 @@
 """Dibuja las láminas del sitio en escala de grises.
 
 Cada lámina sale de datos o geometría reales del proyecto: puntos de una curva,
-la S-box de AES, un estado de Keccak, la tabla de GF(2^8). El tramado no se hace
+el estado de AES, un estado de Keccak, la tabla de GF(2^8). El tramado no se hace
 aquí: el navegador lo aplica al ancho exacto de pantalla (src/scripts/raster.ts).
 Uso: python3 tools/raster/laminas.py [nombre ...]
 """
 
+import json
 import sys
 from pathlib import Path
 
@@ -14,12 +15,17 @@ import numpy as np
 from PIL import Image, ImageDraw
 import hashlib
 
-SALIDA = Path(__file__).resolve().parents[2] / "public" / "laminas"
+RAIZ = Path(__file__).resolve().parents[2]
+SALIDA = RAIZ / "public" / "laminas"
+DATOS = RAIZ / "src" / "data" / "aes-rondas.json"
 
 
-def guardar(nombre, gris):
-    imagen = Image.fromarray((np.clip(gris, 0, 1) * 255).astype(np.uint8))
-    imagen.save(SALIDA / f"{nombre}.webp", quality=88, method=6)
+def guardar(nombre, gris, alfa=None):
+    """Guarda gris más transparencia: lo que no es dibujo deja ver la pátina."""
+    tono = (np.clip(gris, 0, 1) * 255).astype(np.uint8)
+    opaco = np.full(tono.shape, 255, np.uint8) if alfa is None else (alfa * 255).astype(np.uint8)
+    imagen = Image.fromarray(np.dstack([tono, tono, tono, opaco]))
+    imagen.save(SALIDA / f"{nombre}.webp", quality=88, alpha_quality=100, exact=True, method=6)
     print(f"{nombre}: {imagen.width}x{imagen.height}")
 
 
@@ -76,40 +82,42 @@ def puntos_curva(p):
 
 
 def hero():
-    """Toro (la curva sobre C) sobre sus puntos en un campo finito."""
+    """Cielo de la portada: los puntos de la curva sobre un campo finito."""
     ancho, alto = 1920, 1200
     p = 1021
     puntos = puntos_curva(p)
     print(f"  E(F_{p}) tiene {len(puntos) + 1} puntos contando el infinito")
 
-    cielo = np.ones((alto, ancho))
     ys, xs = np.mgrid[0:alto, 0:ancho].astype(float)
+    cielo = np.zeros((alto, ancho), bool)
     for x, y in puntos:
         cx, cy = (x + 0.5) / p * ancho, (y + 0.5) / p * alto
-        radio = 2.7
         x0, x1 = int(max(cx - 6, 0)), int(min(cx + 7, ancho))
         y0, y1 = int(max(cy - 6, 0)), int(min(cy + 7, alto))
         d = np.hypot(xs[y0:y1, x0:x1] - cx, ys[y0:y1, x0:x1] - cy)
-        cielo[y0:y1, x0:x1] = np.minimum(cielo[y0:y1, x0:x1], (d > radio) * 1.0)
+        cielo[y0:y1, x0:x1] |= d <= 2.7
 
+    # Sin puntos bajo el título ni el menú: ahí el texto va directo sobre la pátina.
+    titulo = (ys / alto > 0.42) & (xs / ancho < 0.62)
+    menu = ys / alto < 0.09
+    guardar("hero", np.ones((alto, ancho)), cielo & ~titulo & ~menu)
+
+
+def dona():
+    """Respaldo sin WebGL2 de DONA en src/scripts/escenas.ts, con las mismas constantes."""
+    lado = 900
     R, r = 1.62, 0.47
-    inclinacion = np.radians(58)
-    c, s = np.cos(inclinacion), np.sin(inclinacion)
-    ladeo = np.radians(-24)
-    cz, sz = np.cos(ladeo), np.sin(ladeo)
-    giro = np.array([[1, 0, 0], [0, c, -s], [0, s, c]]) @ np.array([[cz, -sz, 0], [sz, cz, 0], [0, 0, 1]])
+    a, b = np.radians(58), np.radians(-24)
+    rx = np.array([[1, 0, 0], [0, np.cos(a), -np.sin(a)], [0, np.sin(a), np.cos(a)]])
+    rz = np.array([[np.cos(b), -np.sin(b), 0], [np.sin(b), np.cos(b), 0], [0, 0, 1]])
+    giro = rx @ rz
 
     def sdf(q):
         q = q @ giro
-        a = np.hypot(q[..., 0], q[..., 2]) - R
-        return np.hypot(a, q[..., 1]) - r
+        return np.hypot(np.hypot(q[..., 0], q[..., 2]) - R, q[..., 1]) - r
 
-    camara = np.array([-2.15, 0.45, 6.2])
-    mira = [-2.15, 0.45, 0.0]
-    punto, n, golpe, rayos = trazar(sdf, ancho, alto, camara, mira, zoom=2.25)
+    punto, n, golpe, rayos = trazar(sdf, lado, lado, np.array([0.0, 0.0, 6.2]), [0, 0, 0], zoom=2.1)
     tono = luz(n, rayos, [-0.5, 0.75, 0.55], ambiente=0.03, brillo=0.75)
-
-    # Retícula de periodos: el toro es C módulo un retículo.
     q = punto @ giro
     u = np.arctan2(q[..., 2], q[..., 0])
     v = np.arctan2(q[..., 1], np.hypot(q[..., 0], q[..., 2]) - R)
@@ -117,40 +125,10 @@ def hero():
         np.abs(((u * 36 / (2 * np.pi)) % 1) - 0.5), np.abs(((v * 14 / (2 * np.pi)) % 1) - 0.5)
     )
     tono = np.where(malla < 0.04, tono * 0.45, tono)
-
-    gris = cielo.copy()
-    gris[golpe] = np.clip(tono[golpe], 0, 1)
-
-    # Aclara la zona del título para que el texto se lea sobre el grabado.
-    claro = np.clip((ys / alto - 0.42) / 0.2, 0, 1) * np.clip((0.62 - xs / ancho) / 0.14, 0, 1)
-    arriba = np.clip((0.09 - ys / alto) / 0.05, 0, 1)
-    gris = gris + (1 - gris) * np.maximum(claro, arriba) * (~golpe)
-    guardar("hero", gris)
-
-
-def moteado():
-    """Manchas del verdín. El ruido se filtra con FFT para que el mosaico no tenga costuras."""
-    lado = 720
-    azar = np.random.default_rng(1021)
-
-    def ruido(corte, potencia):
-        fx = np.fft.fftfreq(lado)[:, None]
-        fy = np.fft.fftfreq(lado)[None, :]
-        f = np.hypot(fx, fy)
-        filtro = 1 / np.maximum(f, corte) ** potencia
-        campo = np.fft.ifft2(np.fft.fft2(azar.standard_normal((lado, lado))) * filtro).real
-        return (campo - campo.mean()) / campo.std()
-
-    manchas = 0.7 * ruido(0.004, 1.5) + 0.5 * ruido(0.03, 1.0)
-    grano = azar.random((lado, lado))
-    oscuro = np.clip(manchas - 0.35, 0, 1.6) / 1.6
-    claro = np.clip(-manchas - 0.45, 0, 1.6) / 1.6
-    rgba = np.zeros((lado, lado, 4), np.uint8)
-    rgba[..., :3] = np.where((grano < oscuro * 0.9)[..., None], [15, 42, 39], [196, 224, 211])
-    alfa = np.where(grano < oscuro * 0.9, 16, np.where(grano < claro * 0.9, 34, 0))
-    rgba[..., 3] = alfa
-    Image.fromarray(rgba).save(SALIDA / "moteado.webp", lossless=True, method=6)
-    print("moteado:", (SALIDA / "moteado.webp").stat().st_size)
+    assert not (golpe[0].any() or golpe[-1].any() or golpe[:, 0].any() or golpe[:, -1].any())
+    filas, columnas = np.flatnonzero(golpe.any(1)), np.flatnonzero(golpe.any(0))
+    print(f"  margen: {filas[0]}..{filas[-1]} y {columnas[0]}..{columnas[-1]} de {lado}")
+    guardar("dona", tono, golpe)
 
 
 def isometrico(x, y, z, escala):
@@ -191,20 +169,84 @@ def sbox_aes():
     return caja
 
 
-def sbox():
-    """Relieve de la S-box: 16 x 16 columnas, cada altura es el byte sustituido."""
+def rondas_aes(clave, bloque):
+    """AES-256 que conserva el estado tras cada paso, de la entrada a la ronda 14."""
     caja = sbox_aes()
-    assert caja[0x53] == 0xed and caja[0x00] == 0x63
-    ancho, alto = 1600, 1160
-    imagen = Image.new("L", (ancho, alto), 255)
-    dibujo = ImageDraw.Draw(imagen)
-    for suma in range(31):
-        for x in range(16):
-            y = suma - x
-            if 0 <= y < 16:
-                h = 0.25 + caja[x * 16 + y] / 255 * 6.5
-                cubo(dibujo, ancho / 2, 350, x, y, 0, h, 50, (235, 118, 24))
-    guardar("sbox", np.asarray(imagen) / 255)
+    xt = lambda v: ((v << 1) ^ (0x1b if v & 0x80 else 0)) & 0xff
+    palabras = [list(clave[i : i + 4]) for i in range(0, 32, 4)]
+    rcon = 1
+    for i in range(8, 60):
+        w = list(palabras[-1])
+        if i % 8 == 0:
+            w = [caja[b] for b in w[1:] + w[:1]]
+            w[0] ^= rcon
+            rcon = xt(rcon)
+        elif i % 8 == 4:
+            w = [caja[b] for b in w]
+        palabras.append([a ^ b for a, b in zip(palabras[i - 8], w)])
+
+    def agregar(estado, ronda):
+        llave = sum(palabras[ronda * 4 : ronda * 4 + 4], [])
+        return [a ^ b for a, b in zip(estado, llave)]
+
+    estado = list(bloque)
+    estados = [bytes(estado)]
+    estado = agregar(estado, 0)
+    estados.append(bytes(estado))
+    for ronda in range(1, 15):
+        estado = [caja[b] for b in estado]
+        estado = [estado[(i + 4 * (i % 4)) % 16] for i in range(16)]
+        if ronda < 14:
+            mezcla = []
+            for c in range(0, 16, 4):
+                col = estado[c : c + 4]
+                for i in range(4):
+                    mezcla.append(xt(col[i]) ^ xt(col[(i + 1) % 4]) ^ col[(i + 1) % 4] ^ col[(i + 2) % 4] ^ col[(i + 3) % 4])
+            estado = mezcla
+        estado = agregar(estado, ronda)
+        estados.append(bytes(estado))
+    return estados
+
+
+def aes():
+    """Estado de AES-256 sobre un bloque de GCM. Respaldo de AES en src/scripts/escenas.ts."""
+    # Vector de FIPS 197, apéndice C.3.
+    prueba = rondas_aes(bytes(range(32)), bytes.fromhex("00112233445566778899aabbccddeeff"))
+    assert prueba[-1].hex() == "8ea2b7ca516745bfeafc49904b496089"
+
+    clave = hashlib.sha3_256(b"sdoc-web: clave de demostracion").digest()
+    nonce = bytes(range(0x10, 0xd0, 0x10))
+    bloque = nonce + (2).to_bytes(4, "big")  # Con nonce de 12 B, GCM cifra el texto desde el contador 2.
+    estados = rondas_aes(clave, bloque)
+    etiquetas = ["Entrada", "Clave inicial"] + [f"Ronda {r} de 14" for r in range(1, 15)]
+    espaciar = lambda e: " ".join(f"{b:02x}" for b in e)
+    DATOS.write_text(
+        json.dumps({"clave": clave.hex(), "etiquetas": etiquetas, "estados": [espaciar(e) for e in estados]}, indent=2) + "\n"
+    )
+
+    lado, paso, base = 1200, 0.95, -1.2
+    a, b = 0.6, np.radians(45)
+    rx = np.array([[1, 0, 0], [0, np.cos(a), -np.sin(a)], [0, np.sin(a), np.cos(a)]])
+    ry = np.array([[np.cos(b), 0, np.sin(b)], [0, 1, 0], [-np.sin(b), 0, np.cos(b)]])
+    giro = rx @ ry
+    columnas = [
+        ((i // 4 - 1.5) * paso, 0.12 + estados[0][i] / 255 * 2.4, (i % 4 - 1.5) * paso) for i in range(16)
+    ]
+
+    def sdf(q):
+        q = q @ giro
+        distancias = []
+        for x, h, z in columnas:
+            d = np.abs(q - [x, base + h / 2, z]) - [0.42, h / 2, 0.42]
+            distancias.append(np.linalg.norm(np.maximum(d, 0), axis=-1) + np.minimum(d.max(-1), 0))
+        return np.minimum.reduce(distancias)
+
+    _, n, golpe, rayos = trazar(sdf, lado, lado, np.array([0.0, 0.0, 9.0]), [0, 0, 0], zoom=2.6, pasos=110, lejos=20)
+    tono = luz(n @ np.eye(3), rayos, [-0.5, 0.8, 0.5], ambiente=0.05, brillo=0.3)
+    gris = np.ones((lado, lado))
+    gris[golpe] = np.clip(tono[golpe], 0, 1)
+    guardar("aes", gris, golpe)
+    print(f"  salida: {estados[-1].hex()}")
 
 
 def keccak_f(a):
@@ -256,7 +298,8 @@ def keccak():
             for x in range(5):
                 if (a[x][y] >> z) & 1:
                     cubo(dibujo, ancho * 0.22, 290, z * 1.0, x * 1.0, y * 1.0, 0.9, 54, (235, 120, 26))
-    guardar("keccak", np.asarray(imagen) / 255)
+    gris = np.asarray(imagen)
+    guardar("keccak", gris / 255, gris < 255)
 
 
 def gf256():
@@ -294,11 +337,12 @@ def ulam():
                 x, y, n = x + dx, y + dy, n + 1
             dx, dy = -dy, dx
         tramo += 1
-    guardar("ulam", np.kron(rejilla, np.ones((2, 2))))
+    primos = np.kron(rejilla, np.ones((2, 2))) == 0
+    guardar("ulam", np.ones(primos.shape), primos)
 
 
 def cadena():
-    """Tres eslabones: raíz, emisor y dispositivo. La cadena X.509, literal."""
+    """Tres eslabones: raíz, emisor y dispositivo. Respaldo de CADENA en src/scripts/escenas.ts."""
     ancho, alto = 1400, 1500
     centros = [np.array([-1.5, 1.95, 0.0]), np.array([0.0, 0.0, 0.0]), np.array([1.5, -1.95, 0.0])]
     eje = normalizar(np.array([1.5, -1.95, 0.0]))
@@ -318,17 +362,17 @@ def cadena():
         return np.minimum.reduce(distancias)
 
     camara = np.array([0.0, 0.0, 9.5])
-    punto, n, golpe, rayos = trazar(sdf, ancho, alto, camara, [0, 0, 0], zoom=2.5, pasos=110, lejos=20)
+    punto, n, golpe, rayos = trazar(sdf, ancho, alto, camara, [0, 0, 0], zoom=2.3, pasos=110, lejos=20)
     tono = luz(n, rayos, [-0.6, 0.7, 0.5], ambiente=0.04, brillo=0.9)
     gris = np.ones((alto, ancho))
     gris[golpe] = np.clip(tono[golpe], 0, 1)
-    guardar("cadena", gris)
+    guardar("cadena", gris, golpe)
 
 
 LAMINAS = {
     "hero": hero,
-    "moteado": moteado,
-    "sbox": sbox,
+    "dona": dona,
+    "aes": aes,
     "keccak": keccak,
     "gf256": gf256,
     "ulam": ulam,

@@ -5,9 +5,10 @@ No vende nada: explica arquitectura y mecanismos, y ofrece los entregables.
 
 ## Idea
 
-La página es una placa de cobre oxidada que funciona como atlas de láminas. Cada
-dibujo se rasteriza con tramado ordenado y sale de datos reales del proyecto. Lo
-memorable es el rasterizado; todo lo demás se queda quieto y disciplinado.
+La página es metal oxidado que funciona como atlas de láminas. El fondo es el shader
+de Figma «Patina», portado a WebGL2 en `src/scripts/patina.ts` con sus valores
+exactos. Cada dibujo se rasteriza con tramado ordenado, sale de datos reales del
+proyecto y parece impreso sobre el metal. Todo lo demás se queda quieto.
 
 ## Tokens
 
@@ -15,12 +16,24 @@ Definidos en `src/styles/global.css`, consumidos por el plugin `src/styles/patin
 
 | Token | Valor | Uso |
 | --- | --- | --- |
-| `verdin` | `#8dbfae` | Fondo de la página |
-| `verdin-palido` | `#c4e0d3` | Brillos del tramado, texto sobre bronce |
-| `tinta` | `#0f2a27` | Texto y tramado sobre verdín |
-| `bronce` | `#17332e` | Placa ennegrecida, sección de arquitectura |
-| `cobre` | `#7a2f0e` | Foco, acento sobre verdín |
-| `cobre-vivo` | `#e09a63` | Acento sobre bronce |
+| `metal` | `#192f32` | Metal base del shader y velos |
+| `oxido` | `#4f8275` | Oxidación del shader |
+| `mineral` | `#947557` | Acento mineral del shader |
+| `claro` | `#e6f1eb` | Texto |
+| `verdin` | `#8dbfae` | Cuerpo del tramado, bordes |
+| `verdin-palido` | `#c4e0d3` | Brillos del tramado, líneas |
+| `tinta` | `#0b1c1e` | Sombras del tramado, texto sobre rellenos claros |
+| `cobre-vivo` | `#f0b384` | Acento y foco |
+
+Shader: cobertura 52 %, escala de manchas 44 %, suavidad 18 %, detalle 72 %,
+contraste 1.03, semilla 41, desplazamiento 50/50. Se dibuja una vez, fijo detrás del
+contenido, y se repite sólo al cambiar el tamaño. Sin WebGL2 queda
+`public/laminas/patina.webp`, una captura del shader.
+
+Legibilidad: sobre la oxidación clara ningún color de texto alcanza 4.5:1. Por eso la
+portada muestra el shader completo y oscurece sólo donde hay texto, y `main` lleva
+`.velo`, el metal base al 66 %. Medido píxel a píxel, el peor caso es 4.8:1 en el
+acento y 7.5:1 en el texto; en la portada, 5:1. Si cambias el velo, vuelve a medir.
 
 Tipografía: Piazzolla con eje óptico para todo el texto, en 800 o 900 para títulos.
 Sometype Mono sólo para bytes, hexadecimal, identificadores y nombres de formato
@@ -36,7 +49,9 @@ Sometype Mono sólo para bytes, hexadecimal, identificadores y nombres de format
   al final de enlaces y sin numeración decorativa. Numerar sólo una secuencia real.
 - La estructura se resuelve con espacio y con la lámina. Una línea sólo si separa
   datos, por ejemplo filas de una tabla.
-- Movimiento: la portada se revela una vez y el puntero la bruñe. Fuera de ahí,
+- Movimiento: la portada emerge una vez, de sombras a brillos. La dona, la cadena y
+  el estado de AES responden al puntero: se inclinan hacia él; las dos primeras giran y el
+  tercero corre sus rondas. Al salir vuelven a su pose de reposo. Fuera de ahí,
   sólo responde a acciones de la persona. Nada de entradas al hacer scroll.
 - Respetar `prefers-reduced-motion`, foco visible y teclado en todo control.
 - Funcionar desde 360 px sin desplazamiento horizontal.
@@ -44,16 +59,18 @@ Sometype Mono sólo para bytes, hexadecimal, identificadores y nombres de format
 ## Láminas
 
 Componente `src/components/Lamina.astro`, con `nombre`, `alt`, `celda` y `discreta`.
-Las imágenes se generan con `pnpm laminas` y se traman en el navegador.
+Las imágenes se generan con `pnpm laminas`, llevan transparencia y se traman en el
+navegador a tres tintas (`--raster-tinta`, `--raster-medio`, `--raster-luz`).
 
 | Lámina | Dato real |
 | --- | --- |
-| `hero` | Puntos de y² = x³ + 7 sobre F_1021 (1036 con el infinito) y un toro |
-| `sbox` | S-box de AES calculada; cada altura es el byte sustituido |
+| `hero` | Puntos de y² = x³ + 7 sobre F_1021 (1036 con el infinito) |
+| `dona` | Toro, respaldo sin WebGL2 de la escena `DONA` de `src/scripts/escenas.ts` |
+| `aes` | Estado de AES-256 sobre un bloque de GCM. Respaldo de la escena `AES`; las rondas están en `src/data/aes-rondas.json` |
 | `keccak` | Estado de SHA3-256 tras absorber `SDOC`; primeras 22 rebanadas de 64 |
 | `gf256` | Tabla de multiplicar de GF(2⁸) con `0x11b` |
 | `ulam` | Espiral de Ulam de 201 × 201, sólo en los perfiles de firma |
-| `cadena` | Tres eslabones: raíz, emisor y dispositivo |
+| `cadena` | Tres eslabones: raíz, emisor y dispositivo. Respaldo de la escena `CADENA` |
 
 ## Voz
 

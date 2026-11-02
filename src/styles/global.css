@@ -5,12 +5,16 @@
 @import "@fontsource-variable/sometype-mono/wght.css";
 
 @theme {
+  /* Los tres primeros son los del shader de pátina. */
+  --color-metal: #192f32;
+  --color-oxido: #4f8275;
+  --color-mineral: #947557;
+  --color-claro: #e6f1eb;
   --color-verdin: #8dbfae;
   --color-verdin-palido: #c4e0d3;
-  --color-tinta: #0f2a27;
+  --color-tinta: #0b1c1e;
   --color-bronce: #17332e;
-  --color-cobre: #7a2f0e;
-  --color-cobre-vivo: #e09a63;
+  --color-cobre-vivo: #f0b384;
 
   --font-serif: "Piazzolla Variable", Georgia, serif;
   --font-mono: "Sometype Mono Variable", ui-monospace, monospace;
@@ -57,12 +61,17 @@
   }
 
   :focus-visible {
-    outline: 3px solid var(--color-cobre);
+    outline: 3px solid var(--color-cobre-vivo);
     outline-offset: 3px;
   }
 
-  .placa-bronce :focus-visible {
-    outline-color: var(--color-cobre-vivo);
+  /* Sin WebGL2 ni JavaScript, una captura del shader ocupa su lugar. */
+  html:not(.webgl2) body {
+    background: url("/laminas/patina.webp") center / cover fixed var(--color-metal);
+  }
+
+  html:not(.webgl2) [data-patina] {
+    display: none;
   }
 
   code,

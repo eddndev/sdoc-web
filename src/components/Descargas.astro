@@ -1,6 +1,7 @@
 ---
 /* Descargas: documentos, herramientas y clientes, con tamaño y hash de cada uno. */
 import artefactos from "../data/artefactos.json";
+import { URL_ARTEFACTOS } from "../data/sitio";
 
 interface Fila {
   nombre: string;
@@ -22,10 +23,10 @@ const legible = (bytes: number) =>
 const locales = (grupo: string): Fila[] =>
   archivos
     .filter((entrada) => entrada.grupo === grupo)
-    .map((entrada) => ({ ...entrada, archivo: undefined, enlace: `/descargas/${entrada.archivo}` }));
+    .map((entrada) => ({ ...entrada, archivo: undefined, enlace: `${URL_ARTEFACTOS}/${entrada.archivo}` }));
 
 const paquetes: Fila[] = [
-  ...clientes.paquetes.map(({ url: _sinEnlace, ...paquete }) => paquete),
+  ...clientes.paquetes.map((paquete) => ({ ...paquete, enlace: `${URL_ARTEFACTOS}/${paquete.archivo}` })),
   {
     nombre: "Certificado de firma del APK",
     descripcion: "Huella del certificado que firma el APK de Android.",
@@ -36,7 +37,7 @@ const paquetes: Fila[] = [
 const grupos = [
   { titulo: "Documentos", filas: locales("documentos") },
   { titulo: "Herramientas", filas: locales("herramientas") },
-  { titulo: "Clientes", filas: paquetes, sinEnlace: true },
+  { titulo: "Clientes", filas: paquetes, conNota: true },
 ];
 ---
 
@@ -48,22 +49,23 @@ const grupos = [
   </p>
 
   {
-    grupos.map(({ titulo, filas, sinEnlace }) => (
+    grupos.map(({ titulo, filas, conNota }) => (
       <div class="mt-14 grid gap-x-12 gap-y-4 lg:grid-cols-[11rem_minmax(0,1fr)]">
         <h3 class="text-subtitulo font-black">{titulo}</h3>
 
         <div>
-          {sinEnlace && (
+          {conNota && (
             <p class="mb-5 max-w-[38rem]">
               Versión {clientes.version}, commit <code>{clientes.commit}</code>, etiqueta{" "}
-              <code>{clientes.etiqueta}</code>. Estos paquetes todavía no tienen alojamiento público y requieren un alta
-              aprobada por un administrador u otro equipo activo para funcionar.
+              <code>{clientes.etiqueta}</code>. Son versiones de prueba y requieren un alta aprobada por un administrador u
+              otro equipo activo para funcionar. Cada ZIP trae también el paquete anterior que usamos para ensayar la
+              actualización.
             </p>
           )}
 
           <ul>
             {filas.map((fila) => (
-              <li class="grid gap-x-10 gap-y-3 border-t border-tinta/40 py-4 sm:grid-cols-[minmax(0,1fr)_auto]">
+              <li class="grid gap-x-10 gap-y-3 border-t border-verdin-palido/30 py-4 sm:grid-cols-[minmax(0,1fr)_auto]">
                 <div>
                   <p class="font-bold">
                     {fila.enlace ? (
@@ -95,7 +97,7 @@ const grupos = [
                       hidden
                       data-copiar={fila.hash}
                       aria-label={`Copiar ${fila.algoritmo} de ${fila.nombre}`}
-                      class="-my-1 cursor-pointer py-1 text-cobre underline decoration-1 underline-offset-[0.18em] hover:decoration-[3px]"
+                      class="-my-1 cursor-pointer py-1 text-cobre-vivo underline decoration-1 underline-offset-[0.18em] hover:decoration-[3px]"
                     >
                       Copiar
                     </button>

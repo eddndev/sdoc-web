@@ -1,5 +1,6 @@
 ---
 /* Mecanismos en el orden en que un documento los usa. Cada bloque tiene su propia composición. */
+import EstadoAes from "./EstadoAes.astro";
 import Lamina from "./Lamina.astro";
 import Reparto from "./Reparto.astro";
 import TiraBytes from "./TiraBytes.astro";
@@ -19,7 +20,7 @@ import {
 const margen = "px-4 sm:px-8 lg:px-12";
 const numeral = "block text-titulo leading-none font-black [font-feature-settings:'lnum']";
 const titulo = "text-[clamp(1.75rem,3.2vw,2.5rem)] font-black";
-const fila = "border-t border-tinta/30";
+const fila = "border-t border-verdin-palido/30";
 ---
 
 <section id="mecanismos" class="pt-24 pb-24 lg:pt-36 lg:pb-36">
@@ -36,7 +37,7 @@ const fila = "border-t border-tinta/30";
     <li class="grid lg:grid-cols-12 lg:gap-x-8">
       <div class:list={[margen, "lg:col-span-6 lg:pr-0"]}>
         <h3 class={titulo}>
-          <span aria-hidden="true" class:list={[numeral, "mb-3 text-cobre"]}>1</span>
+          <span aria-hidden="true" class:list={[numeral, "mb-3 text-cobre-vivo"]}>1</span>
           Un equipo prueba sus claves y recibe certificados
         </h3>
       </div>
@@ -44,6 +45,7 @@ const fila = "border-t border-tinta/30";
       <figure class="mt-8 lg:col-span-6 lg:col-start-7 lg:row-span-2 lg:row-start-1 lg:mt-0">
         <Lamina
           nombre="cadena"
+          escena="cadena"
           celda={3}
           class="aspect-[14/15] w-full"
           alt="Tres eslabones de cadena enlazados en diagonal, dibujados con tramado de puntos: raíz, emisor y dispositivo."
@@ -100,7 +102,7 @@ const fila = "border-t border-tinta/30";
     <li class:list={[margen, "mt-28 lg:mt-40"]}>
       <div class="grid lg:grid-cols-12 lg:gap-x-8">
         <h3 class:list={[titulo, "lg:col-span-5"]}>
-          <span aria-hidden="true" class:list={[numeral, "mb-3 text-cobre"]}>2</span>
+          <span aria-hidden="true" class:list={[numeral, "mb-3 text-cobre-vivo"]}>2</span>
           La sesión se abre firmando un reto
         </h3>
         <div class="mt-6 max-w-[38rem] space-y-4 lg:col-span-6 lg:col-start-7 lg:mt-0">
@@ -118,29 +120,19 @@ const fila = "border-t border-tinta/30";
       <TiraBytes {...sdlg} leyenda class="mt-12" />
     </li>
 
-    <!-- 3. Sellado: la S-box cruza la página de borde a borde. -->
-    <li class="mt-28 lg:mt-40">
-      <div class={margen}>
-        <h3 class:list={[titulo, "max-w-[38rem]"]}>
-          <span aria-hidden="true" class:list={[numeral, "mb-3 text-cobre"]}>3</span>
+    <!-- 3. Sellado: el estado de AES acompaña al texto, como la cadena en el paso 1. -->
+    <li class="mt-28 grid lg:mt-40 lg:grid-cols-12 lg:gap-x-8">
+      <div class:list={[margen, "lg:col-span-6 lg:pr-0"]}>
+        <h3 class={titulo}>
+          <span aria-hidden="true" class:list={[numeral, "mb-3 text-cobre-vivo"]}>3</span>
           El documento se sella con una clave nueva
         </h3>
       </div>
 
-      <figure class="mt-8">
-        <Lamina
-          nombre="sbox"
-          celda={3}
-          class="aspect-[160/116] w-full lg:max-w-[74rem]"
-          alt="Relieve isométrico de 16 por 16 columnas tramadas; la altura de cada columna es un byte de la S-box de AES."
-        />
-        <figcaption class:list={[margen, "mt-2 text-nota"]}>
-          S-box de AES calculada. Cada altura es el byte sustituido.
-        </figcaption>
-      </figure>
+      <EstadoAes class="mt-8 lg:col-span-6 lg:col-start-7 lg:row-span-2 lg:row-start-1 lg:mt-0" />
 
-      <div class:list={[margen, "mt-10 grid gap-y-10 lg:grid-cols-12 lg:gap-x-8"]}>
-        <div class="max-w-[38rem] space-y-4 lg:col-span-5">
+      <div class:list={[margen, "mt-8 lg:col-span-6 lg:pr-0"]}>
+        <div class="max-w-[38rem] space-y-4">
           <p>
             El cliente empaqueta el archivo en <code>SDCF</code> y lo cifra con AES-256-GCM bajo <i>K</i><sub>doc</sub>, una
             clave de 32 B nueva en cada versión, con un nonce de 12 B. Clave y nonce salen del CSPRNG. El nombre y el MIME viajan
@@ -153,7 +145,7 @@ const fila = "border-t border-tinta/30";
           </p>
         </div>
 
-        <div class="lg:col-span-6 lg:col-start-7">
+        <div class="mt-10">
           <table class="w-full text-left text-nota">
             <caption class="pb-2 text-left font-bold">
               Sobre <code>SDEV</code>, 16&nbsp;980&nbsp;274 B como máximo
@@ -208,7 +200,7 @@ const fila = "border-t border-tinta/30";
           <Lamina
             nombre="gf256"
             discreta
-            class="aspect-square w-full max-w-[512px] [&>img]:mix-blend-normal"
+            class="aspect-square w-full max-w-[512px]"
             alt="Tabla de multiplicar de GF(2 a la 8) con reducción 0x11b, de 256 por 256: tramas regulares en la esquina de los valores pequeños y textura densa en el resto."
           />
           <figcaption class="mt-2 max-w-[512px] text-nota">
@@ -232,7 +224,7 @@ const fila = "border-t border-tinta/30";
       <div class="grid lg:grid-cols-12 lg:gap-x-8">
         <div class="lg:col-span-7">
           <h3 class:list={[titulo, "max-w-[38rem]"]}>
-            <span aria-hidden="true" class:list={[numeral, "mb-3 text-cobre"]}>5</span>
+            <span aria-hidden="true" class:list={[numeral, "mb-3 text-cobre-vivo"]}>5</span>
             Cada persona firma con uno de dos perfiles
           </h3>
           <div class="mt-6 max-w-[38rem] space-y-4">
@@ -309,7 +301,7 @@ const fila = "border-t border-tinta/30";
     <!-- 6. Conformidad: sin lámina; la fórmula del compromiso ocupa su lugar. -->
     <li class:list={[margen, "mt-28 lg:mt-40"]}>
       <h3 class:list={[titulo, "max-w-[38rem]"]}>
-        <span aria-hidden="true" class:list={[numeral, "mb-3 text-cobre"]}>6</span>
+        <span aria-hidden="true" class:list={[numeral, "mb-3 text-cobre-vivo"]}>6</span>
         Cliente y abogado firman la misma versión
       </h3>
 

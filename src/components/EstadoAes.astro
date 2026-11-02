@@ -1,0 +1,49 @@
+---
+/*
+ * Lámina del sellado: el estado de AES-256 ronda por ronda. La escena AES de escenas.ts la
+ * anima y conecta el control, que sólo aparece si hay escena en vivo. El control es la vía
+ * para teclado, pantallas táctiles y quien pide movimiento reducido.
+ */
+import Lamina from "./Lamina.astro";
+import rondas from "../data/aes-rondas.json";
+
+interface Props {
+  class?: string;
+}
+const { class: clase = "" } = Astro.props;
+const margen = "px-4 sm:px-8 lg:pr-12 lg:pl-0";
+---
+
+<figure class={clase}>
+  <Lamina
+    nombre="aes"
+    escena="aes"
+    celda={3}
+    class="mx-auto aspect-square w-full max-w-[min(100%,74svh)]"
+    alt="Dieciséis columnas tramadas en una rejilla de 4 por 4. La altura de cada una es un byte del estado de AES-256."
+  />
+
+  <figcaption class:list={[margen, "mt-2 space-y-3 text-nota"]}>
+    <div data-rondas hidden>
+      <div class="flex items-baseline justify-between gap-4">
+        <label for="ronda-aes" class="font-bold">Rondas de AES-256</label>
+        <output for="ronda-aes" data-ronda-nombre>{rondas.etiquetas[0]}</output>
+      </div>
+      <input
+        id="ronda-aes"
+        type="range"
+        min="0"
+        max={rondas.estados.length - 1}
+        step="1"
+        value="0"
+        class="mt-1 w-full accent-[var(--color-cobre-vivo)]"
+      />
+    </div>
+    <p><code data-ronda-bytes>{rondas.estados[0]}</code></p>
+    <p>
+      Cada altura es un byte del estado. Es un bloque de ejemplo con nonce <code>10 20 … c0</code>, contador 2 y una clave de
+      demostración; en el sistema el nonce sale del CSPRNG. En GCM, AES cifra este bloque y el resultado se combina con el
+      texto claro por XOR.
+    </p>
+  </figcaption>
+</figure>

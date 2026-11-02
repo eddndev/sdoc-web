@@ -1,0 +1,39 @@
+{
+  "clave": "88b2537b3cb6e2ca11c8b8b7af863ffa0518b34dc5edb0ead73b16a783c33fa8",
+  "etiquetas": [
+    "Entrada",
+    "Clave inicial",
+    "Ronda 1 de 14",
+    "Ronda 2 de 14",
+    "Ronda 3 de 14",
+    "Ronda 4 de 14",
+    "Ronda 5 de 14",
+    "Ronda 6 de 14",
+    "Ronda 7 de 14",
+    "Ronda 8 de 14",
+    "Ronda 9 de 14",
+    "Ronda 10 de 14",
+    "Ronda 11 de 14",
+    "Ronda 12 de 14",
+    "Ronda 13 de 14",
+    "Ronda 14 de 14"
+  ],
+  "estados": [
+    "10 20 30 40 50 60 70 80 90 a0 b0 c0 00 00 00 02",
+    "98 92 63 3b 6c d6 92 4a 81 68 08 77 af 86 3f f8",
+    "f9 b8 a0 c3 3d 4a 72 f5 2e 7f d2 bb 1a 00 93 d2",
+    "ef 98 6b 35 4a b8 57 66 4b 93 73 ed 64 6f 9f 0e",
+    "0f 4b 5c 53 7a 15 ba 3c fa f1 1a b5 e9 0f d9 10",
+    "76 1e 0e 1b 0d ad 75 88 69 d1 6a c4 fe ab 4d 86",
+    "70 84 9c d0 a6 75 9b 10 15 eb 6e 6a e4 73 b6 43",
+    "e2 e7 d0 3b ad e4 9e 7d df 61 e8 21 fb 7d b3 b2",
+    "c3 26 1e f2 76 a7 43 ce 65 42 aa c4 06 06 da 3a",
+    "b2 7d 41 5c 07 3f 8e a9 fc 2f 28 40 2a 9d 4b a5",
+    "b0 fc 95 b1 c6 b2 18 f4 8f ce c7 2e d4 77 22 10",
+    "4a 14 99 ff b9 f6 6e 74 4e cb 4f 88 0e 53 6e c1",
+    "23 bc e5 c1 3b 1c d7 52 77 02 73 cc 75 38 e9 41",
+    "62 7e 6b ef aa 0d 44 0f 92 58 79 d6 b1 60 9f 2b",
+    "1e b1 cc e9 b2 97 5e 6b ce 12 6f 83 2c fd 52 1c",
+    "d2 a2 eb 0c 1d b8 26 25 12 f6 4f 48 92 04 fa b1"
+  ]
+}

@@ -1,7 +1,9 @@
 {
   "name": "sdoc-web",
   "private": true,
-  "engines": { "node": ">=22.22.0" },
+  "engines": {
+    "node": ">=22.22.0"
+  },
   "type": "module",
   "version": "0.1.0",
   "scripts": {
@@ -9,11 +11,14 @@
     "build": "astro build",
     "preview": "astro preview",
     "laminas": "python3 tools/raster/laminas.py",
-    "artefactos": "node tools/artefactos.mjs"
+    "artefactos": "node tools/artefactos.mjs",
+    "artefactos:subir": "node tools/subir-artefactos.mjs"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
-      "esbuild"
+      "esbuild",
+      "workerd",
+      "sharp"
     ]
   },
   "dependencies": {
@@ -25,6 +30,8 @@
     "tailwindcss": "4.3.3"
   },
   "devDependencies": {
-    "typescript": "7.0.2"
-  }
+    "typescript": "7.0.2",
+    "wrangler": "4.156.1"
+  },
+  "packageManager": "pnpm@10.32.1"
 }

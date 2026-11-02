@@ -66,8 +66,7 @@
         "formato": "ZIP",
         "bytes": 13013475,
         "algoritmo": "SHA-256",
-        "hash": "c8a4a62341c61909eb4581f7e08983af9a5d755e307d8110b626dd439a0d55bd",
-        "url": null
+        "hash": "c8a4a62341c61909eb4581f7e08983af9a5d755e307d8110b626dd439a0d55bd"
       },
       {
         "nombre": "Linux",
@@ -75,8 +74,7 @@
         "formato": "ZIP",
         "bytes": 128462547,
         "algoritmo": "SHA-256",
-        "hash": "b3472faf882d4e9004c33ef9ac06415b829a2c6ca3ba5ac20a46cc25d70eccdd",
-        "url": null
+        "hash": "b3472faf882d4e9004c33ef9ac06415b829a2c6ca3ba5ac20a46cc25d70eccdd"
       },
       {
         "nombre": "Windows",
@@ -84,8 +82,7 @@
         "formato": "ZIP",
         "bytes": 135684745,
         "algoritmo": "SHA-256",
-        "hash": "a4fd2d654133e2d517f37a4088e28d179c2591bce889566f8e0944842666ec4d",
-        "url": null
+        "hash": "a4fd2d654133e2d517f37a4088e28d179c2591bce889566f8e0944842666ec4d"
       }
     ]
   }
