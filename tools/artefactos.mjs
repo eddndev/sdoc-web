@@ -50,9 +50,9 @@ const LOCALES = [
 
 /* Los clientes salen del release del repositorio privado; ver subir-artefactos.mjs. */
 const CLIENTES = {
-  version: "0.3.5",
-  commit: "c53dae6",
-  etiqueta: "clients-0.3.5-c53dae6-r40628378756",
+  version: "0.3.6",
+  commit: "283dc1f",
+  etiqueta: "clients-0.3.6-283dc1f-r41755694149",
   certificadoApk: {
     algoritmo: "SHA-256",
     hash: "0903ffa6288486b3c3e04ad51d5c57da98ff0a6b4842b09df1b9401abd41ea1b",
@@ -62,25 +62,25 @@ const CLIENTES = {
       nombre: "Android",
       archivo: "secure-documents-android.zip",
       formato: "ZIP",
-      bytes: 13013475,
+      bytes: 13013661,
       algoritmo: "SHA-256",
-      hash: "c8a4a62341c61909eb4581f7e08983af9a5d755e307d8110b626dd439a0d55bd",
+      hash: "6a9a6c99abe7fd404451065e80ac0392c83301b5244be6cd2e8257ade53b8ed8",
     },
     {
       nombre: "Linux",
       archivo: "secure-documents-linux.zip",
       formato: "ZIP",
-      bytes: 128462547,
+      bytes: 128419688,
       algoritmo: "SHA-256",
-      hash: "b3472faf882d4e9004c33ef9ac06415b829a2c6ca3ba5ac20a46cc25d70eccdd",
+      hash: "2023f5aef3715e0898c796520b0073223e30418ff0abb0f5a262626314c5ea36",
     },
     {
       nombre: "Windows",
       archivo: "secure-documents-windows.zip",
       formato: "ZIP",
-      bytes: 135684745,
+      bytes: 135686268,
       algoritmo: "SHA-256",
-      hash: "a4fd2d654133e2d517f37a4088e28d179c2591bce889566f8e0944842666ec4d",
+      hash: "5dca75f182b634f4c025d5ae898f37c0a0df43d2d3a39e7cbd757279f2b9581b",
     },
   ],
 };
